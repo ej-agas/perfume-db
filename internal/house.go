@@ -27,3 +27,9 @@ func NewHouse(name string, country string, description string, yearFounded time.
 		UpdatedAt:   now,
 	}
 }
+
+type HouseService interface {
+	Save(house House) error
+	Find(id int) (*House, error)
+	FindBySlug(s string) (*House, error)
+}

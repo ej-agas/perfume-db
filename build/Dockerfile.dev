@@ -1,0 +1,41 @@
+FROM golang:1.22-alpine3.19 AS builder
+
+RUN /sbin/apk update && \
+	/sbin/apk --no-cache add ca-certificates git tzdata && \
+	/usr/sbin/update-ca-certificates
+
+RUN adduser -D -g '' perfume_db_user
+WORKDIR /home/perfume_db_user
+
+
+COPY go.mod /home/perfume_db_user
+COPY go.sum /home/perfume_db_user
+
+RUN go mod download
+
+COPY cmd /home/perfume_db_user/cmd
+COPY handlers /home/perfume_db_user/handlers
+COPY internal /home/perfume_db_user/internal
+COPY postgresql /home/perfume_db_user/postgresql
+
+COPY . .
+
+ARG VERSION
+
+ENV CGO_ENABLED=0
+ENV DOCKER_BUILDKIT=1
+
+RUN --mount=type=cache,target=/root/.cache/go-build \
+    go build -buildvcs=false -ldflags "-X main.version=$VERSION" -o perfume_db_app ./cmd/perfume-db
+
+FROM busybox:musl
+
+COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
+COPY --from=builder /usr/share/zoneinfo /usr/share/zoneinfo
+COPY --from=builder /etc/passwd /etc/passwd
+COPY --from=builder /home/perfume_db_user/perfume_db_app /home/perfume_db_user
+
+USER perfume_db_user
+WORKDIR /home
+
+ENTRYPOINT ["/home/perfume_db_user"]

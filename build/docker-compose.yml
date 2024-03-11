@@ -1,0 +1,46 @@
+version: '3.9'
+
+services:
+  app:
+    image: perfume-db:latest
+    container_name: perfume-db-app
+    restart: unless-stopped
+    depends_on:
+      - db
+    env_file:
+      - .env
+    ports:
+      - "4000:4000"
+    networks:
+      - perfume-db-network
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 128M
+  db:
+    container_name: perfume-db-database
+    image: postgres:16.2-alpine3.19
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    env_file:
+      - .env
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    networks:
+      - perfume-db-network
+
+volumes:
+  pg_data:
+    driver: local
+
+networks:
+  perfume-db-network:
+    driver: bridge
+    name: perfume-db-network

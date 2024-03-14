@@ -10,5 +10,14 @@ type HouseHandler struct {
 }
 
 func (h HouseHandler) CreateHouse(w http.ResponseWriter, r *http.Request) {
-	w.WriteHeader(202)
+
+	data := struct {
+		Status  int
+		Message string
+	}{
+		Status:  200,
+		Message: "Create House Handler",
+	}
+
+	JSONResponse(w, data, 200)
 }

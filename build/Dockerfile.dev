@@ -7,7 +7,6 @@ RUN /sbin/apk update && \
 RUN adduser -D -g '' perfume_db_user
 WORKDIR /home/perfume_db_user
 
-
 COPY go.mod /home/perfume_db_user
 COPY go.sum /home/perfume_db_user
 
@@ -26,7 +25,7 @@ ENV CGO_ENABLED=0
 ENV DOCKER_BUILDKIT=1
 
 RUN --mount=type=cache,target=/root/.cache/go-build \
-    go build -buildvcs=false -ldflags "-X main.version=$VERSION" -o perfume_db_app ./cmd/perfume-db
+    go build -buildvcs=false -o perfume_db_app ./cmd/perfume-db
 
 FROM busybox:musl
 

@@ -2,7 +2,9 @@ version: '3.9'
 
 services:
   app:
-    image: perfume-db:latest
+    build:
+      dockerfile: ./build/Dockerfile.dev
+      context: '../'
     container_name: perfume-db-app
     restart: unless-stopped
     depends_on:
@@ -18,6 +20,13 @@ services:
         limits:
           cpus: '2'
           memory: 128M
+    develop:
+      watch:
+        - path: '../'
+          action: rebuild
+          ignore:
+            - '../migrations'
+
   db:
     container_name: perfume-db-database
     image: postgres:16.2-alpine3.19

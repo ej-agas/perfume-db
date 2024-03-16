@@ -3,8 +3,8 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/ej-agas/perfume-db/handlers"
 	"github.com/ej-agas/perfume-db/postgresql"
+	validator2 "github.com/go-playground/validator/v10"
 	"github.com/jackc/pgx/v5"
 	"log"
 	"log/slog"
@@ -14,14 +14,16 @@ import (
 )
 
 type config struct {
-	port        int
-	environment string
+	port          int
+	environment   string
+	encryptionKey string
 }
 
 type application struct {
-	config       config
-	logger       *slog.Logger
-	houseHandler *handlers.HouseHandler
+	config    config
+	logger    *slog.Logger
+	validator *validator2.Validate
+	services  *postgresql.Services
 }
 
 var Version string
@@ -34,8 +36,9 @@ func main() {
 	}
 
 	cfg := config{
-		port:        port,
-		environment: os.Getenv("APP_ENV"),
+		port:          port,
+		environment:   os.Getenv("APP_ENV"),
+		encryptionKey: os.Getenv("APP_ENCRYPTION_KEY"),
 	}
 
 	dbPort, err := strconv.Atoi(os.Getenv("DB_PORT"))
@@ -64,11 +67,11 @@ func main() {
 	defer conn.Close(context.Background())
 
 	app := &application{
-		config: cfg,
-		logger: slog.New(slog.NewTextHandler(os.Stderr, nil)),
+		config:    cfg,
+		logger:    slog.New(slog.NewTextHandler(os.Stderr, nil)),
+		validator: validator2.New(validator2.WithRequiredStructEnabled()),
+		services:  postgresql.NewServices(conn),
 	}
-
-	app.houseHandler = &handlers.HouseHandler{Service: postgresql.HouseService{DB: conn}}
 
 	app.logger.Info("APP RUNNING IN", "PORT", os.Getenv("APP_PORT"))
 

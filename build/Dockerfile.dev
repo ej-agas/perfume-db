@@ -13,7 +13,6 @@ COPY go.sum /home/perfume_db_user
 RUN go mod download
 
 COPY cmd /home/perfume_db_user/cmd
-COPY handlers /home/perfume_db_user/handlers
 COPY internal /home/perfume_db_user/internal
 COPY postgresql /home/perfume_db_user/postgresql
 

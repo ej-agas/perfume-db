@@ -7,6 +7,7 @@ import (
 	"github.com/ej-agas/perfume-db/internal"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
+	"time"
 )
 
 type HouseService struct {
@@ -16,6 +17,14 @@ type HouseService struct {
 var ErrHouseAlreadyExists error = fmt.Errorf("error house already exists")
 
 func (service HouseService) Save(house *internal.House) error {
+	if house.ID == 0 {
+		return service.saveNewHouse(house)
+	}
+
+	return service.updateHouse(house)
+}
+
+func (service HouseService) saveNewHouse(house *internal.House) error {
 	q := `
 		INSERT INTO houses (slug, name, country, description, year_founded, created_at, updated_at)
 		VALUES ($1, $2, $3, $4, $5, $6, $7)
@@ -41,6 +50,37 @@ func (service HouseService) Save(house *internal.House) error {
 	}
 
 	return err
+}
+
+func (service HouseService) updateHouse(house *internal.House) error {
+	q := `
+		UPDATE houses 
+		SET slug = $2,
+		    name = $3,
+		    country = $4,
+		    description = $5,
+		    year_founded = $6,
+		    updated_at = $7
+		WHERE id = $1
+	`
+
+	house.UpdatedAt = time.Now()
+	_, err := service.db.Exec(context.Background(),
+		q,
+		house.ID,
+		house.Slug,
+		house.Name,
+		house.Country,
+		house.Description,
+		house.YearFounded,
+		house.UpdatedAt,
+	)
+
+	if err != nil {
+		return fmt.Errorf("update house error: %w", err)
+	}
+
+	return nil
 }
 
 func (service HouseService) List(cursor, perPage int) ([]internal.House, error) {

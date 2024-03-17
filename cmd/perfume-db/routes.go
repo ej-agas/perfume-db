@@ -27,9 +27,11 @@ func (app *application) routes() http.Handler {
 	router := http.NewServeMux()
 
 	router.HandleFunc("GET /", Home)
+
 	router.HandleFunc("GET /houses", app.listHouses)
 	router.HandleFunc("POST /houses", app.createHouseHandler)
 	router.HandleFunc("GET /houses/{slug}", app.showHouseBySlug)
+	router.HandleFunc("PATCH /houses/{slug}", app.updateHouseBySlug)
 
 	return router
 }

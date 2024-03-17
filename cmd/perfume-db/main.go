@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/ej-agas/perfume-db/postgresql"
-	validator2 "github.com/go-playground/validator/v10"
+	"github.com/go-playground/validator/v10"
 	"github.com/jackc/pgx/v5"
 	"log"
 	"log/slog"
@@ -22,7 +22,7 @@ type config struct {
 type application struct {
 	config    config
 	logger    *slog.Logger
-	validator *validator2.Validate
+	validator *validator.Validate
 	services  *postgresql.Services
 }
 
@@ -69,7 +69,7 @@ func main() {
 	app := &application{
 		config:    cfg,
 		logger:    slog.New(slog.NewTextHandler(os.Stderr, nil)),
-		validator: validator2.New(validator2.WithRequiredStructEnabled()),
+		validator: validator.New(validator.WithRequiredStructEnabled()),
 		services:  postgresql.NewServices(conn),
 	}
 

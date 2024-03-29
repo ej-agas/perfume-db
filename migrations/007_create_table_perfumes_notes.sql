@@ -1,9 +1,9 @@
 create table perfumes_notes(
-    perfume_id serial not null,
-    note_id serial not null,
+    perfume_id varchar not null,
+    note_id varchar not null,
     category varchar,
-    constraint fk_perfume_id foreign key (perfume_id) references perfumes (id),
-    constraint fk_note_id foreign key (note_id) references notes (id)
+    constraint fk_perfume_id foreign key (perfume_id) references perfumes (public_id),
+    constraint fk_note_id foreign key (note_id) references notes (public_id)
 );
 
 create index perfumes_notes_category__idx on perfumes_notes (category);

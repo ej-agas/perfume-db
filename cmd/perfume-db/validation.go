@@ -37,6 +37,9 @@ func CreateResponseFromErrors(err error) *ValidationErrors {
 		case "lte":
 			message := fmt.Sprintf("The %s field should be less than %s.", field, err.Param())
 			response.Errors[jsonTag] = append(response.Errors[jsonTag], message)
+		case "url":
+			message := fmt.Sprintf("The %s field must be a valid URL.", field)
+			response.Errors[jsonTag] = append(response.Errors[jsonTag], message)
 		}
 	}
 

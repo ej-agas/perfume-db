@@ -14,7 +14,7 @@ type HouseService struct {
 	db *pgx.Conn
 }
 
-var ErrHouseAlreadyExists error = fmt.Errorf("error house already exists")
+var ErrHouseAlreadyExists = fmt.Errorf("error house already exists")
 
 func (service HouseService) Save(house *internal.House) error {
 	if house.ID == 0 {
@@ -26,13 +26,20 @@ func (service HouseService) Save(house *internal.House) error {
 
 func (service HouseService) saveNewHouse(house *internal.House) error {
 	q := `
-		INSERT INTO houses (slug, name, country, description, year_founded, created_at, updated_at)
-		VALUES ($1, $2, $3, $4, $5, $6, $7)
+		INSERT INTO houses (public_id, slug, name, country, description, year_founded, created_at, updated_at)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
 	`
 	_, err := service.db.Exec(
 		context.Background(),
 		q,
-		house.Slug, house.Name, house.Country, house.Description, house.YearFounded, house.CreatedAt, house.UpdatedAt,
+		house.PublicId,
+		house.Slug,
+		house.Name,
+		house.Country,
+		house.Description,
+		house.YearFounded,
+		house.CreatedAt,
+		house.UpdatedAt,
 	)
 
 	if err == nil {
@@ -95,7 +102,6 @@ func (service HouseService) List(cursor, perPage int) ([]internal.House, error) 
 	}
 	defer rows.Close()
 
-	// Iterate through the rows and scan the results into House objects
 	var houses []internal.House
 	for rows.Next() {
 		var house internal.House
@@ -148,11 +154,12 @@ func (service HouseService) Find(id int) (*internal.House, error) {
 func (service HouseService) FindBySlug(s string) (*internal.House, error) {
 	var house internal.House
 
-	q := `SELECT * FROM houses WHERE slug=$1`
+	q := `SELECT * FROM houses WHERE slug = $1`
 
 	if err := service.db.QueryRow(context.Background(), q, s).
 		Scan(
 			&house.ID,
+			&house.PublicId,
 			&house.Slug,
 			&house.Name,
 			&house.Country,
@@ -161,7 +168,6 @@ func (service HouseService) FindBySlug(s string) (*internal.House, error) {
 			&house.CreatedAt,
 			&house.UpdatedAt,
 		); err != nil {
-		fmt.Println(err)
 		return nil, err
 	}
 

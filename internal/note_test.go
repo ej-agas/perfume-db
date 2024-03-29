@@ -11,7 +11,7 @@ func TestNewNote(t *testing.T) {
 	Description := "Citrus Note"
 	ImageURL := "/images/citrus-note.png"
 
-	note := NewNote(Name, Description, ImageURL)
+	note := NewNote(Name, Description, ImageURL, "123")
 
 	assert.Equal(t, Name, note.Name)
 	assert.Equal(t, Slug, note.Slug)

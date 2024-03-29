@@ -1,5 +1,6 @@
 create table perfumes(
     id serial primary key,
+    public_id varchar not null,
     slug text not null,
     name varchar not null,
     description text,
@@ -13,6 +14,7 @@ create table perfumes(
     constraint fk_house_id foreign key (house_id) references houses (id)
 );
 
+create unique index perfumes_unique_public_id__idx on perfumes (public_id);
 create unique index perfumes_unique_slug__idx on perfumes (slug);
 create unique index perfumes_unique_name__idx on perfumes (name);
 create index perfumes_concentration__idx on perfumes (concentration);

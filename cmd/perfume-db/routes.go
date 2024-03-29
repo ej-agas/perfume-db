@@ -33,5 +33,11 @@ func (app *application) routes() http.Handler {
 	router.HandleFunc("GET /houses/{slug}", app.showHouseBySlug)
 	router.HandleFunc("PATCH /houses/{slug}", app.updateHouseBySlug)
 
+	router.HandleFunc("POST /note-groups", app.createNoteGroupHandler)
+	router.HandleFunc("GET /note-groups/{slug}", app.showNoteGroupBySlug)
+
+	router.HandleFunc("POST /notes", app.createNoteHandler)
+	router.HandleFunc("GET /notes/{slug}", app.showNoteBySlug)
+
 	return router
 }

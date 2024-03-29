@@ -3,13 +3,14 @@ package internal
 import "time"
 
 type NoteGroup struct {
-	ID          int
-	Name        string
-	Slug        string
-	Description string
-	ImageURL    string
-	CreatedAt   time.Time
-	UpdatedAt   time.Time
+	ID          int       `json:"-"`
+	PublicId    string    `json:"id"`
+	Name        string    `json:"name"`
+	Slug        string    `json:"slug"`
+	Description string    `json:"description"`
+	ImageURL    string    `json:"image_url"`
+	CreatedAt   time.Time `json:"created_at"`
+	UpdatedAt   time.Time `json:"updated_at"`
 }
 
 func NewNoteGroup(Name, Description, ImageURL string) *NoteGroup {

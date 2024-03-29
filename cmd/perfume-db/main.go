@@ -3,6 +3,8 @@ package main
 import (
 	"context"
 	"fmt"
+	"github.com/ej-agas/perfume-db/internal"
+	"github.com/ej-agas/perfume-db/nanoid"
 	"github.com/ej-agas/perfume-db/postgresql"
 	"github.com/go-playground/validator/v10"
 	"github.com/jackc/pgx/v5"
@@ -24,6 +26,7 @@ type application struct {
 	logger    *slog.Logger
 	validator *validator.Validate
 	services  *postgresql.Services
+	factory   *internal.Factory
 }
 
 var Version string
@@ -66,11 +69,16 @@ func main() {
 	}
 	defer conn.Close(context.Background())
 
+	idAlphabet := "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
+	idLength := 16
+	idGenerator := nanoid.NewNanoIdGenerator(idAlphabet, idLength)
+
 	app := &application{
 		config:    cfg,
 		logger:    slog.New(slog.NewTextHandler(os.Stderr, nil)),
 		validator: validator.New(validator.WithRequiredStructEnabled()),
 		services:  postgresql.NewServices(conn),
+		factory:   &internal.Factory{IdGenerator: idGenerator},
 	}
 
 	app.logger.Info("APP RUNNING IN", "PORT", os.Getenv("APP_PORT"))

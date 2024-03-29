@@ -7,7 +7,8 @@ import (
 )
 
 type House struct {
-	ID          int       `json:"id"`
+	ID          int       `json:"-"`
+	PublicId    string    `json:"id"`
 	Slug        string    `json:"slug"`
 	Name        string    `json:"name"`
 	Country     string    `json:"country"`

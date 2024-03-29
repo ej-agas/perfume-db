@@ -42,7 +42,13 @@ func (app *application) createHouseHandler(w http.ResponseWriter, r *http.Reques
 	}
 
 	yearFounded := time.Date(requestData.YearFounded, time.January, 1, 0, 0, 0, 0, time.UTC)
-	house := internal.NewHouse(requestData.Name, requestData.Country, requestData.Description, yearFounded)
+	house, err := app.factory.NewHouse(requestData.Name, requestData.Country, requestData.Description, yearFounded)
+
+	if err != nil {
+		app.logger.Error(err.Error())
+		app.ServerError(w)
+		return
+	}
 
 	err = app.services.House.Save(house)
 

@@ -14,6 +14,10 @@ type Note struct {
 	UpdatedAt   time.Time `json:"updated_at"`
 }
 
+func (n Note) GetID() int {
+	return n.ID
+}
+
 func NewNote(Name, Description, ImageURL, NoteGroupId string) *Note {
 	now := time.Now()
 	return &Note{
@@ -30,6 +34,6 @@ func NewNote(Name, Description, ImageURL, NoteGroupId string) *Note {
 type NoteService interface {
 	List(cursor, perPage int) ([]Note, error)
 	Save(note *Note) error
-	Find(id int) (*Note, error)
+	Find(publicId string) (*Note, error)
 	FindBySlug(s string) (*Note, error)
 }

@@ -14,7 +14,10 @@ type NoteService struct {
 	db *pgx.Conn
 }
 
-var ErrNoteAlreadyExists = fmt.Errorf("note already exists")
+var (
+	ErrNoteAlreadyExists = fmt.Errorf("note already exists")
+	ErrNoteGroupNotFound = fmt.Errorf("note group not found")
+)
 
 func (service NoteService) List(cursor, perPage int) ([]internal.Note, error) {
 	q := `SELECT * FROM notes WHERE id > $1 ORDER BY id LIMIT $2`
@@ -34,10 +37,12 @@ func (service NoteService) List(cursor, perPage int) ([]internal.Note, error) {
 		var note internal.Note
 		err := rows.Scan(
 			&note.ID,
+			&note.PublicId,
 			&note.Slug,
 			&note.Name,
 			&note.Description,
 			&note.ImageURL,
+			&note.NoteGroupId,
 			&note.CreatedAt,
 			&note.UpdatedAt,
 		)
@@ -94,6 +99,10 @@ func (service NoteService) saveNewNote(note *internal.Note) error {
 		return fmt.Errorf("database error: %w: %w", ErrNoteAlreadyExists, pgErr)
 	}
 
+	if pgErr.Code == "23503" {
+		return fmt.Errorf("database error: %w: %w", ErrNoteGroupNotFound, pgErr)
+	}
+
 	return err
 }
 
@@ -103,7 +112,8 @@ func (service NoteService) updateNote(note *internal.Note) error {
 		SET slug = $2,
 		    name = $3,
 		    description = $4,
-		    updated_at = $5
+		    note_group_id = $5,
+		    updated_at = $6
 		WHERE id = $1
 	`
 
@@ -114,6 +124,7 @@ func (service NoteService) updateNote(note *internal.Note) error {
 		note.Slug,
 		note.Name,
 		note.Description,
+		note.NoteGroupId,
 		note.UpdatedAt,
 	)
 
@@ -124,18 +135,20 @@ func (service NoteService) updateNote(note *internal.Note) error {
 	return nil
 }
 
-func (service NoteService) Find(id int) (*internal.Note, error) {
+func (service NoteService) Find(publicId string) (*internal.Note, error) {
 	var note internal.Note
 
-	q := `SELECT * FROM notes WHERE id = $1`
+	q := `SELECT * FROM notes WHERE public_id = $1`
 
-	if err := service.db.QueryRow(context.Background(), q, id).
+	if err := service.db.QueryRow(context.Background(), q, publicId).
 		Scan(
 			&note.ID,
-			&note.Name,
+			&note.PublicId,
 			&note.Slug,
+			&note.Name,
 			&note.Description,
 			&note.ImageURL,
+			&note.NoteGroupId,
 			&note.CreatedAt,
 			&note.UpdatedAt,
 		); err != nil {
@@ -154,8 +167,8 @@ func (service NoteService) FindBySlug(s string) (*internal.Note, error) {
 		Scan(
 			&note.ID,
 			&note.PublicId,
-			&note.Name,
 			&note.Slug,
+			&note.Name,
 			&note.Description,
 			&note.ImageURL,
 			&note.NoteGroupId,

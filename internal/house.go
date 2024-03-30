@@ -60,6 +60,6 @@ func (h House) MarshalJSON() ([]byte, error) {
 type HouseService interface {
 	List(cursor, perPage int) ([]House, error)
 	Save(house *House) error
-	Find(id int) (*House, error)
+	Find(publicId string) (*House, error)
 	FindBySlug(s string) (*House, error)
 }

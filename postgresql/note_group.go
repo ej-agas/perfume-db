@@ -34,6 +34,7 @@ func (service NoteGroupService) List(cursor, perPage int) ([]internal.NoteGroup,
 		var note internal.NoteGroup
 		err := rows.Scan(
 			&note.ID,
+			&note.PublicId,
 			&note.Slug,
 			&note.Name,
 			&note.Description,
@@ -102,7 +103,8 @@ func (service NoteGroupService) updateNoteGroup(noteGroup *internal.NoteGroup) e
 		SET slug = $2,
 		    name = $3,
 		    description = $4,
-		    updated_at = $5
+		    image_url = $5,
+		    updated_at = $6
 		WHERE id = $1
 	`
 
@@ -113,6 +115,7 @@ func (service NoteGroupService) updateNoteGroup(noteGroup *internal.NoteGroup) e
 		noteGroup.Slug,
 		noteGroup.Name,
 		noteGroup.Description,
+		noteGroup.ImageURL,
 		noteGroup.UpdatedAt,
 	)
 
@@ -123,14 +126,15 @@ func (service NoteGroupService) updateNoteGroup(noteGroup *internal.NoteGroup) e
 	return nil
 }
 
-func (service NoteGroupService) Find(id int) (*internal.NoteGroup, error) {
+func (service NoteGroupService) Find(publicId string) (*internal.NoteGroup, error) {
 	var noteGroup internal.NoteGroup
 
-	q := `SELECT * FROM note_groups WHERE id = $1`
+	q := `SELECT * FROM note_groups WHERE public_id = $1`
 
-	if err := service.db.QueryRow(context.Background(), q, id).
+	if err := service.db.QueryRow(context.Background(), q, publicId).
 		Scan(
 			&noteGroup.ID,
+			&noteGroup.PublicId,
 			&noteGroup.Name,
 			&noteGroup.Slug,
 			&noteGroup.Description,

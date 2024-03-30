@@ -16,6 +16,45 @@ type HouseService struct {
 
 var ErrHouseAlreadyExists = fmt.Errorf("error house already exists")
 
+func (service HouseService) List(cursor, perPage int) ([]internal.House, error) {
+	q := `SELECT * FROM houses WHERE id > $1 ORDER BY id LIMIT $2`
+	if cursor <= 0 {
+		cursor = 0
+	}
+
+	rows, err := service.db.Query(context.Background(), q, cursor, perPage)
+	if err != nil {
+		return nil, fmt.Errorf("failed to execute query: %w", err)
+	}
+	defer rows.Close()
+
+	var houses []internal.House
+	for rows.Next() {
+		var house internal.House
+		err := rows.Scan(
+			&house.ID,
+			&house.PublicId,
+			&house.Slug,
+			&house.Name,
+			&house.Country,
+			&house.Description,
+			&house.YearFounded,
+			&house.CreatedAt,
+			&house.UpdatedAt,
+		)
+		if err != nil {
+			return nil, err
+		}
+		houses = append(houses, house)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return houses, nil
+}
+
 func (service HouseService) Save(house *internal.House) error {
 	if house.ID == 0 {
 		return service.saveNewHouse(house)
@@ -90,52 +129,15 @@ func (service HouseService) updateHouse(house *internal.House) error {
 	return nil
 }
 
-func (service HouseService) List(cursor, perPage int) ([]internal.House, error) {
-	q := `SELECT * FROM houses WHERE id > $1 ORDER BY id LIMIT $2`
-	if cursor <= 0 {
-		cursor = 0
-	}
-
-	rows, err := service.db.Query(context.Background(), q, cursor, perPage)
-	if err != nil {
-		return nil, fmt.Errorf("failed to execute query: %w", err)
-	}
-	defer rows.Close()
-
-	var houses []internal.House
-	for rows.Next() {
-		var house internal.House
-		err := rows.Scan(
-			&house.ID,
-			&house.Slug,
-			&house.Name,
-			&house.Country,
-			&house.Description,
-			&house.YearFounded,
-			&house.CreatedAt,
-			&house.UpdatedAt,
-		)
-		if err != nil {
-			return nil, err
-		}
-		houses = append(houses, house)
-	}
-
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-
-	return houses, nil
-}
-
-func (service HouseService) Find(id int) (*internal.House, error) {
+func (service HouseService) Find(publicId string) (*internal.House, error) {
 	var house internal.House
 
-	q := `SELECT * FROM houses WHERE id=$1`
+	q := `SELECT * FROM houses WHERE public_id = $1`
 
-	if err := service.db.QueryRow(context.Background(), q, id).
+	if err := service.db.QueryRow(context.Background(), q, publicId).
 		Scan(
 			&house.ID,
+			&house.PublicId,
 			&house.Slug,
 			&house.Name,
 			&house.Country,
@@ -144,7 +146,6 @@ func (service HouseService) Find(id int) (*internal.House, error) {
 			&house.CreatedAt,
 			&house.UpdatedAt,
 		); err != nil {
-		fmt.Println(err)
 		return nil, err
 	}
 

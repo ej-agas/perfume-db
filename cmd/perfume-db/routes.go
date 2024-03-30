@@ -28,16 +28,20 @@ func (app *application) routes() http.Handler {
 
 	router.HandleFunc("GET /", Home)
 
-	router.HandleFunc("GET /houses", app.listHouses)
 	router.HandleFunc("POST /houses", app.createHouseHandler)
+	router.HandleFunc("GET /houses", app.listHouses)
 	router.HandleFunc("GET /houses/{slug}", app.showHouseBySlug)
-	router.HandleFunc("PATCH /houses/{slug}", app.updateHouseBySlug)
+	router.HandleFunc("PATCH /houses/{publicId}", app.updateHouseByPublicId)
 
 	router.HandleFunc("POST /note-groups", app.createNoteGroupHandler)
+	router.HandleFunc("GET /note-groups", app.listNoteGroups)
 	router.HandleFunc("GET /note-groups/{slug}", app.showNoteGroupBySlug)
+	router.HandleFunc("PATCH /note-groups/{publicId}", app.updateNoteGroupByPublicId)
 
 	router.HandleFunc("POST /notes", app.createNoteHandler)
+	router.HandleFunc("GET /notes", app.listNotes)
 	router.HandleFunc("GET /notes/{slug}", app.showNoteBySlug)
+	router.HandleFunc("PATCH /notes/{publicId}", app.updateNoteByPublicId)
 
 	return router
 }

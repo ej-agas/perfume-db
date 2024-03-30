@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"github.com/go-playground/validator/v10"
 	"strings"
@@ -12,13 +13,19 @@ type ValidationErrors struct {
 	Errors  map[string][]string `json:"errors"`
 }
 
-func CreateResponseFromErrors(err error) *ValidationErrors {
-	response := &ValidationErrors{
-		Message: "The given data was invalid.",
-		Errors:  make(map[string][]string),
-	}
+func NewValidationErrors() *ValidationErrors {
+	return &ValidationErrors{Message: "The Given data was invalid.", Errors: make(map[string][]string)}
+}
 
-	validationErrors, ok := err.(validator.ValidationErrors)
+func (validationErrors *ValidationErrors) AddError(field, message string) {
+	validationErrors.Errors[field] = append(validationErrors.Errors[field], message)
+}
+
+func CreateResponseFromErrors(err error) *ValidationErrors {
+	response := NewValidationErrors()
+
+	var validationErrors validator.ValidationErrors
+	ok := errors.As(err, &validationErrors)
 	if !ok {
 		return response
 	}
@@ -30,16 +37,16 @@ func CreateResponseFromErrors(err error) *ValidationErrors {
 		switch err.Tag() {
 		case "required":
 			message := fmt.Sprintf("The %s field is %s.", field, err.Tag())
-			response.Errors[jsonTag] = append(response.Errors[jsonTag], message)
+			response.AddError(jsonTag, message)
 		case "gte":
 			message := fmt.Sprintf("The %s field should be greater than %s.", field, err.Param())
-			response.Errors[jsonTag] = append(response.Errors[jsonTag], message)
+			response.AddError(jsonTag, message)
 		case "lte":
 			message := fmt.Sprintf("The %s field should be less than %s.", field, err.Param())
-			response.Errors[jsonTag] = append(response.Errors[jsonTag], message)
+			response.AddError(jsonTag, message)
 		case "url":
 			message := fmt.Sprintf("The %s field must be a valid URL.", field)
-			response.Errors[jsonTag] = append(response.Errors[jsonTag], message)
+			response.AddError(jsonTag, message)
 		}
 	}
 

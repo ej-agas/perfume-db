@@ -53,7 +53,7 @@ func (app *application) Encrypt(plaintext []byte) (string, error) {
 func (app *application) Decrypt(encoded string) ([]byte, error) {
 	// Create a new AES block cipher with the provided key
 	ciphertext, err := base64.URLEncoding.DecodeString(encoded)
-	fmt.Println(ciphertext, err)
+
 	if err != nil {
 		return nil, err
 	}

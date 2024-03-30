@@ -13,6 +13,10 @@ type NoteGroup struct {
 	UpdatedAt   time.Time `json:"updated_at"`
 }
 
+func (n NoteGroup) GetID() int {
+	return n.ID
+}
+
 func NewNoteGroup(Name, Description, ImageURL string) *NoteGroup {
 	now := time.Now()
 	return &NoteGroup{
@@ -23,4 +27,11 @@ func NewNoteGroup(Name, Description, ImageURL string) *NoteGroup {
 		CreatedAt:   now,
 		UpdatedAt:   now,
 	}
+}
+
+type NoteGroupService interface {
+	List(cursor, perPage int) ([]NoteGroup, error)
+	Save(noteGroup *NoteGroup) error
+	Find(publicId string) (*NoteGroup, error)
+	FindBySlug(s string) (*NoteGroup, error)
 }

@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"github.com/ej-agas/perfume-db/internal"
 	"github.com/ej-agas/perfume-db/postgresql"
 	"net/http"
@@ -120,10 +119,10 @@ func (app *application) showHouseBySlug(w http.ResponseWriter, r *http.Request) 
 	app.JSONResponse(w, house, http.StatusOK, nil)
 }
 
-func (app *application) updateHouseBySlug(w http.ResponseWriter, r *http.Request) {
+func (app *application) updateHouseByPublicId(w http.ResponseWriter, r *http.Request) {
 	var requestData updateHouseRequest
-	house, err := app.services.House.FindBySlug(r.PathValue("slug"))
-	fmt.Printf("%#v\n", house)
+	house, err := app.services.House.Find(r.PathValue("publicId"))
+
 	if err != nil {
 		app.NoContent(w, http.StatusNotFound)
 		return

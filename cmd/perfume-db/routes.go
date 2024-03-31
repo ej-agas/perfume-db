@@ -43,5 +43,10 @@ func (app *application) routes() http.Handler {
 	router.HandleFunc("GET /notes/{slug}", app.showNoteBySlug)
 	router.HandleFunc("PATCH /notes/{publicId}", app.updateNoteByPublicId)
 
+	router.HandleFunc("POST /perfumers", app.createPerfumerHandler)
+	router.HandleFunc("PATCH /perfumers/{publicId}", app.updatePerfumerByPublicIdHandler)
+	router.HandleFunc("GET /perfumers", app.listPerfumersHandler)
+	router.HandleFunc("GET /perfumers/{slug}", app.showPerfumerBySlugHandler)
+
 	return router
 }

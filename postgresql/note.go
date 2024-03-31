@@ -20,11 +20,11 @@ var (
 )
 
 func (service NoteService) List(cursor, perPage int) ([]internal.Note, error) {
-	q := `SELECT * FROM notes WHERE id > $1 ORDER BY id LIMIT $2`
 	if cursor <= 0 {
 		cursor = 0
 	}
 
+	q := `SELECT * FROM notes WHERE id > $1 ORDER BY id LIMIT $2`
 	rows, err := service.db.Query(context.Background(), q, cursor, perPage)
 	if err != nil {
 		return nil, fmt.Errorf("failed to execute query: %w", err)
@@ -35,7 +35,7 @@ func (service NoteService) List(cursor, perPage int) ([]internal.Note, error) {
 
 	for rows.Next() {
 		var note internal.Note
-		err := rows.Scan(
+		if err := rows.Scan(
 			&note.ID,
 			&note.PublicId,
 			&note.Slug,
@@ -45,10 +45,10 @@ func (service NoteService) List(cursor, perPage int) ([]internal.Note, error) {
 			&note.NoteGroupId,
 			&note.CreatedAt,
 			&note.UpdatedAt,
-		)
-		if err != nil {
+		); err != nil {
 			return nil, err
 		}
+
 		notes = append(notes, note)
 	}
 
@@ -95,15 +95,14 @@ func (service NoteService) saveNewNote(note *internal.Note) error {
 		return err
 	}
 
-	if pgErr.Code == "23505" {
+	switch pgErr.Code {
+	case "23505":
 		return fmt.Errorf("database error: %w: %w", ErrNoteAlreadyExists, pgErr)
-	}
-
-	if pgErr.Code == "23503" {
+	case "23503":
 		return fmt.Errorf("database error: %w: %w", ErrNoteGroupNotFound, pgErr)
+	default:
+		return err
 	}
-
-	return err
 }
 
 func (service NoteService) updateNote(note *internal.Note) error {

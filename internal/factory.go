@@ -45,7 +45,7 @@ func (factory Factory) NewNoteGroup(Name, Description, ImageURL string) (*NoteGr
 	}, nil
 }
 
-func (factory Factory) NewHouse(name string, country string, description string, yearFounded time.Time) (*House, error) {
+func (factory Factory) NewHouse(name, country, description string, yearFounded time.Time) (*House, error) {
 	now := time.Now()
 	id, err := factory.IdGenerator.Generate()
 	if err != nil {
@@ -59,6 +59,25 @@ func (factory Factory) NewHouse(name string, country string, description string,
 		Country:     country,
 		Description: description,
 		YearFounded: yearFounded,
+		CreatedAt:   now,
+		UpdatedAt:   now,
+	}, nil
+}
+
+func (factory Factory) NewPerfumer(name, nationality, imageUrl string, birthDate time.Time) (*Perfumer, error) {
+	now := time.Now()
+	id, err := factory.IdGenerator.Generate()
+	if err != nil {
+		return &Perfumer{}, err
+	}
+
+	return &Perfumer{
+		PublicId:    id,
+		Slug:        CreateSlug(name),
+		Name:        name,
+		Nationality: nationality,
+		ImageURL:    imageUrl,
+		BirthDate:   birthDate,
 		CreatedAt:   now,
 		UpdatedAt:   now,
 	}, nil

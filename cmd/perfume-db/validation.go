@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/go-playground/validator/v10"
 	"strings"
+	"time"
 	"unicode"
 )
 
@@ -14,7 +15,7 @@ type ValidationErrors struct {
 }
 
 func NewValidationErrors() *ValidationErrors {
-	return &ValidationErrors{Message: "The Given data was invalid.", Errors: make(map[string][]string)}
+	return &ValidationErrors{Message: "The given data was invalid.", Errors: make(map[string][]string)}
 }
 
 func (validationErrors *ValidationErrors) AddError(field, message string) {
@@ -47,6 +48,9 @@ func CreateResponseFromErrors(err error) *ValidationErrors {
 		case "url":
 			message := fmt.Sprintf("The %s field must be a valid URL.", field)
 			response.AddError(jsonTag, message)
+		case "ymd-date-format":
+			message := fmt.Sprintf("The %s field must be a valid date format 'YYYY-MM-DD'.", field)
+			response.AddError(jsonTag, message)
 		}
 	}
 
@@ -76,4 +80,13 @@ func fieldToSnakeCase(field string) string {
 	}
 
 	return strings.ToLower(snakeCasedField)
+}
+
+type DateValidator struct{}
+
+func (dv DateValidator) Validate(fl validator.FieldLevel) bool {
+	dateStr := fl.Field().String()
+	_, err := time.Parse("2006-01-02", dateStr)
+
+	return err == nil
 }

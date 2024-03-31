@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"github.com/ej-agas/perfume-db/internal"
 	"github.com/ej-agas/perfume-db/postgresql"
 	"net/http"
@@ -123,7 +122,6 @@ func (app *application) createNoteHandler(w http.ResponseWriter, r *http.Request
 func (app *application) showNoteBySlug(w http.ResponseWriter, r *http.Request) {
 	note, err := app.services.Note.FindBySlug(r.PathValue("slug"))
 	if err != nil {
-		fmt.Println(err)
 		app.NoContent(w, http.StatusNotFound)
 		return
 	}

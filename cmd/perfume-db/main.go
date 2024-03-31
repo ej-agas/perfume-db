@@ -73,10 +73,15 @@ func main() {
 	idLength := 16
 	idGenerator := nanoid.NewNanoIdGenerator(idAlphabet, idLength)
 
+	validatorInstance := validator.New(validator.WithRequiredStructEnabled())
+	if err := validatorInstance.RegisterValidation("ymd-date-format", (&DateValidator{}).Validate); err != nil {
+		panic(err)
+	}
+
 	app := &application{
 		config:    cfg,
 		logger:    slog.New(slog.NewTextHandler(os.Stderr, nil)),
-		validator: validator.New(validator.WithRequiredStructEnabled()),
+		validator: validatorInstance,
 		services:  postgresql.NewServices(conn),
 		factory:   &internal.Factory{IdGenerator: idGenerator},
 	}

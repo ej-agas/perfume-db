@@ -7,6 +7,7 @@ import (
 	"github.com/ej-agas/perfume-db/internal"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
+	"strings"
 	"time"
 )
 
@@ -17,6 +18,7 @@ type NoteService struct {
 var (
 	ErrNoteAlreadyExists = fmt.Errorf("note already exists")
 	ErrNoteGroupNotFound = fmt.Errorf("note group not found")
+	ErrNoteNotFound      = fmt.Errorf("note not found")
 )
 
 func (service NoteService) List(cursor, perPage int) ([]internal.Note, error) {
@@ -178,4 +180,58 @@ func (service NoteService) FindBySlug(s string) (*internal.Note, error) {
 	}
 
 	return &note, nil
+}
+
+func (service NoteService) FindMany(publicIds []string) ([]*internal.Note, error) {
+	var notes []*internal.Note
+
+	placeholders := make([]string, len(publicIds))
+	args := make([]interface{}, len(publicIds))
+	for i, id := range publicIds {
+		placeholders[i] = fmt.Sprintf("$%d", i+1)
+		args[i] = id
+	}
+	q := fmt.Sprintf("SELECT * FROM notes WHERE public_id IN (%s)", strings.Join(placeholders, ", "))
+
+	rows, err := service.db.Query(context.Background(), q, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	found := make(map[string]bool)
+	for _, id := range publicIds {
+		found[id] = false
+	}
+
+	for rows.Next() {
+		var note internal.Note
+		if err := rows.Scan(
+			&note.ID,
+			&note.PublicId,
+			&note.Slug,
+			&note.Name,
+			&note.Description,
+			&note.ImageURL,
+			&note.NoteGroupId,
+			&note.CreatedAt,
+			&note.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+
+		found[note.PublicId] = true
+		notes = append(notes, &note)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	for id, ok := range found {
+		if !ok {
+			return nil, fmt.Errorf("%w: note with public_id '%s' not found", ErrNoteNotFound, id)
+		}
+	}
+
+	return notes, nil
 }

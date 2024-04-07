@@ -7,10 +7,12 @@ import (
 	"github.com/ej-agas/perfume-db/internal"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
+	"strings"
 )
 
 var (
 	ErrPerfumerAlreadyExists = fmt.Errorf("perfumer already exists")
+	ErrPerfumerNotFound      = fmt.Errorf("perfumer not found")
 )
 
 type PerfumerService struct {
@@ -175,4 +177,58 @@ func (service PerfumerService) FindBySlug(s string) (*internal.Perfumer, error) 
 	}
 
 	return &perfumer, nil
+}
+
+func (service PerfumerService) FindMany(publicIds ...string) ([]*internal.Perfumer, error) {
+	var perfumers []*internal.Perfumer
+
+	placeholders := make([]string, len(publicIds))
+	args := make([]interface{}, len(publicIds))
+	for i, id := range publicIds {
+		placeholders[i] = fmt.Sprintf("$%d", i+1)
+		args[i] = id
+	}
+	q := fmt.Sprintf("SELECT * FROM perfumers WHERE public_id IN (%s)", strings.Join(placeholders, ", "))
+
+	rows, err := service.db.Query(context.Background(), q, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	found := make(map[string]bool)
+	for _, id := range publicIds {
+		found[id] = false
+	}
+
+	for rows.Next() {
+		var perfumer internal.Perfumer
+		if err := rows.Scan(
+			&perfumer.ID,
+			&perfumer.PublicId,
+			&perfumer.Slug,
+			&perfumer.Name,
+			&perfumer.Nationality,
+			&perfumer.ImageURL,
+			&perfumer.BirthDate,
+			&perfumer.CreatedAt,
+			&perfumer.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+
+		found[perfumer.PublicId] = true
+		perfumers = append(perfumers, &perfumer)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	for id, ok := range found {
+		if !ok {
+			return nil, fmt.Errorf("%w: perfumer with public_id '%s' not found", ErrPerfumerNotFound, id)
+		}
+	}
+
+	return perfumers, nil
 }

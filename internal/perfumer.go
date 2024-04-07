@@ -51,4 +51,5 @@ type PerfumerService interface {
 	Save(note *Perfumer) error
 	Find(publicId string) (*Perfumer, error)
 	FindBySlug(s string) (*Perfumer, error)
+	FindMany(publicIds ...string) ([]*Perfumer, error)
 }

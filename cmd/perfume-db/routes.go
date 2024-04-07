@@ -48,5 +48,7 @@ func (app *application) routes() http.Handler {
 	router.HandleFunc("GET /perfumers", app.listPerfumersHandler)
 	router.HandleFunc("GET /perfumers/{slug}", app.showPerfumerBySlugHandler)
 
+	router.HandleFunc("POST /perfumes", app.createPerfumeHandler)
+
 	return router
 }

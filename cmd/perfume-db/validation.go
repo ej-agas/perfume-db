@@ -3,7 +3,9 @@ package main
 import (
 	"errors"
 	"fmt"
+	"github.com/ej-agas/perfume-db/internal"
 	"github.com/go-playground/validator/v10"
+	"strconv"
 	"strings"
 	"time"
 	"unicode"
@@ -51,6 +53,18 @@ func CreateResponseFromErrors(err error) *ValidationErrors {
 		case "ymd-date-format":
 			message := fmt.Sprintf("The %s field must be a valid date format 'YYYY-MM-DD'.", field)
 			response.AddError(jsonTag, message)
+		case "min":
+			message := fmt.Sprintf("The %s field must have a minimum count of %s", field, err.Param())
+			response.AddError(jsonTag, message)
+		case "fragranceConcentration":
+			message := fmt.Sprintf("The selected %s is invalid", field)
+			response.AddError(jsonTag, message)
+		case "notes":
+			message := fmt.Sprintf("The %s field contains invalid note category.", field)
+			response.AddError(jsonTag, message)
+		case "noteCount":
+			message := fmt.Sprintf("The %s field must have a minimum count of %s.", field, err.Param())
+			response.AddError(jsonTag, message)
 		}
 	}
 
@@ -89,4 +103,48 @@ func (dv DateValidator) Validate(fl validator.FieldLevel) bool {
 	_, err := time.Parse("2006-01-02", dateStr)
 
 	return err == nil
+}
+
+type FragranceConcentrationValidator struct{}
+
+func (validator FragranceConcentrationValidator) Validate(fl validator.FieldLevel) bool {
+	str := fl.Field().String()
+
+	_, err := internal.ConcentrationFromString(str)
+
+	return err == nil
+}
+
+type NoteCategoriesValidator struct{}
+
+func (validator NoteCategoriesValidator) Validate(fl validator.FieldLevel) bool {
+	notes := fl.Field().Interface().(map[string][]string)
+
+	for keys := range notes {
+		if _, ok := internal.NoteCategoryMap[keys]; !ok {
+			return false
+		}
+	}
+
+	return true
+}
+
+type NoteCountValidator struct{}
+
+func (validator NoteCountValidator) Validate(fl validator.FieldLevel) bool {
+	notes := fl.Field().Interface().(map[string][]string)
+
+	minCount, err := strconv.Atoi(fl.Param())
+
+	if err != nil {
+		panic(err)
+	}
+
+	for _, values := range notes {
+		if len(values) < minCount {
+			return false
+		}
+	}
+
+	return true
 }

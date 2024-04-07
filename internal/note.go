@@ -36,4 +36,5 @@ type NoteService interface {
 	Save(note *Note) error
 	Find(publicId string) (*Note, error)
 	FindBySlug(s string) (*Note, error)
+	FindMany(publicIds []string) ([]*Note, error)
 }

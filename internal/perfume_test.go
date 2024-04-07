@@ -15,7 +15,7 @@ func TestNewPerfume(t *testing.T) {
 	YearReleased := time.Now()
 	YearDiscontinued := time.Now()
 
-	house := House{ID: 1000}
+	house := &House{ID: 1000}
 	perfumers := []*Perfumer{{ID: 1}, {ID: 2}, {ID: 3}}
 
 	perfume := NewPerfume(

@@ -78,6 +78,18 @@ func main() {
 		panic(err)
 	}
 
+	if err := validatorInstance.RegisterValidation("fragranceConcentration", (&FragranceConcentrationValidator{}).Validate); err != nil {
+		panic(err)
+	}
+
+	if err := validatorInstance.RegisterValidation("noteCategory", (&NoteCategoriesValidator{}).Validate); err != nil {
+		panic(err)
+	}
+
+	if err := validatorInstance.RegisterValidation("noteCount", (&NoteCountValidator{}).Validate); err != nil {
+		panic(err)
+	}
+
 	app := &application{
 		config:    cfg,
 		logger:    slog.New(slog.NewTextHandler(os.Stderr, nil)),

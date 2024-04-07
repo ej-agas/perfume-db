@@ -11,7 +11,7 @@ type Perfume struct {
 	Description      string
 	Concentration    Concentration
 	ImageURL         string
-	House            House
+	House            *House
 	Perfumers        []*Perfumer
 	Notes            map[NoteCategory][]*Note
 	YearReleased     time.Time
@@ -46,7 +46,7 @@ func WithConcentration(concentration Concentration) PerfumeOption {
 	}
 }
 
-func WithHouse(house House) PerfumeOption {
+func WithHouse(house *House) PerfumeOption {
 	return func(p *Perfume) {
 		p.House = house
 	}
@@ -76,18 +76,10 @@ func WithYearDiscontinued(yearDiscontinued time.Time) PerfumeOption {
 	}
 }
 
-func NewPerfume(opts ...PerfumeOption) *Perfume {
-	now := time.Now()
-	p := &Perfume{
-		CreatedAt: now,
-		UpdatedAt: now,
-	}
-
-	for _, opt := range opts {
-		opt(p)
-	}
-
-	p.Slug = CreateSlug(p.Name + "-" + p.Concentration.String())
-
-	return p
+type PerfumeService interface {
+	List(cursor, perPage int) ([]*Perfume, error)
+	Save(note *Perfume) error
+	Find(publicId string) (*Perfume, error)
+	FindBySlug(s string) (*Perfume, error)
+	FindMany(publicIds []string) ([]*Perfume, error)
 }

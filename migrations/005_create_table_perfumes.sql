@@ -6,12 +6,12 @@ create table perfumes(
     description text,
     concentration smallint not null,
     image_url varchar,
-    house_id serial not null,
+    house_id varchar not null,
     year_released timestamp not null,
     year_discontinued timestamp,
     created_at timestamp,
     updated_at timestamp,
-    constraint fk_house_id foreign key (house_id) references houses (id)
+    constraint fk_house_id foreign key (house_id) references houses (public_id)
 );
 
 create unique index perfumes_unique_public_id__idx on perfumes (public_id);

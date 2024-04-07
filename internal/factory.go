@@ -82,3 +82,19 @@ func (factory Factory) NewPerfumer(name, nationality, imageUrl string, birthDate
 		UpdatedAt:   now,
 	}, nil
 }
+
+func (factory Factory) NewPerfume(opts ...PerfumeOption) (*Perfume, error) {
+	now := time.Now()
+	p := &Perfume{
+		CreatedAt: now,
+		UpdatedAt: now,
+	}
+
+	for _, opt := range opts {
+		opt(p)
+	}
+
+	p.Slug = CreateSlug(p.Name + "-" + p.Concentration.String())
+
+	return p, nil
+}

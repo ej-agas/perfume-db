@@ -23,7 +23,7 @@ services:
         - path: '../'
           action: rebuild
           ignore:
-            - '../migrations'
+            - './migrations'
 
   db:
     container_name: perfume-db-database

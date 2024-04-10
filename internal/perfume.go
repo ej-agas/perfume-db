@@ -5,19 +5,20 @@ import (
 )
 
 type Perfume struct {
-	ID               int
-	Slug             string
-	Name             string
-	Description      string
-	Concentration    Concentration
-	ImageURL         string
-	House            *House
-	Perfumers        []*Perfumer
-	Notes            map[NoteCategory][]*Note
-	YearReleased     time.Time
-	YearDiscontinued time.Time
-	CreatedAt        time.Time
-	UpdatedAt        time.Time
+	ID               int                      `json:"-"`
+	PublicId         string                   `json:"id"`
+	Slug             string                   `json:"slug"`
+	Name             string                   `json:"name"`
+	Description      string                   `json:"description"`
+	Concentration    Concentration            `json:"concentration"`
+	ImageURL         string                   `json:"image_url"`
+	House            *House                   `json:"house"`
+	Perfumers        []*Perfumer              `json:"perfumers"`
+	Notes            map[NoteCategory][]*Note `json:"notes"`
+	YearReleased     time.Time                `json:"year_released"`
+	YearDiscontinued time.Time                `json:"year_discontinued"`
+	CreatedAt        time.Time                `json:"created_at"`
+	UpdatedAt        time.Time                `json:"updated_at"`
 }
 
 type PerfumeOption func(*Perfume)

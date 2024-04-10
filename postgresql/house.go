@@ -14,7 +14,10 @@ type HouseService struct {
 	db *pgx.Conn
 }
 
-var ErrHouseAlreadyExists = fmt.Errorf("error house already exists")
+var (
+	ErrHouseAlreadyExists = fmt.Errorf("error house already exists")
+	ErrHouseNotFound      = fmt.Errorf("house not found")
+)
 
 func (service HouseService) List(cursor, perPage int) ([]internal.House, error) {
 	q := `SELECT * FROM houses WHERE id > $1 ORDER BY id LIMIT $2`

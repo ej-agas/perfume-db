@@ -85,7 +85,13 @@ func (factory Factory) NewPerfumer(name, nationality, imageUrl string, birthDate
 
 func (factory Factory) NewPerfume(opts ...PerfumeOption) (*Perfume, error) {
 	now := time.Now()
+	id, err := factory.IdGenerator.Generate()
+	if err != nil {
+		return &Perfume{}, err
+	}
+
 	p := &Perfume{
+		PublicId:  id,
 		CreatedAt: now,
 		UpdatedAt: now,
 	}

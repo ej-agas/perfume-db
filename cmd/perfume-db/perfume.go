@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"github.com/ej-agas/perfume-db/internal"
 	"github.com/ej-agas/perfume-db/postgresql"
 	"net/http"
@@ -21,8 +20,20 @@ type createPerfumeRequest struct {
 	Notes            map[string][]string `json:"notes" validate:"required,noteCategory,noteCount=1"`
 }
 
+func (app *application) showPerfumeBySlug(w http.ResponseWriter, r *http.Request) {
+	house, err := app.services.Perfume.FindBySlug(r.PathValue("slug"))
+
+	if err != nil {
+		app.NoContent(w, http.StatusNotFound)
+		return
+	}
+
+	app.JSONResponse(w, house, http.StatusOK, nil)
+}
+
 func (app *application) createPerfumeHandler(w http.ResponseWriter, r *http.Request) {
 	var req createPerfumeRequest
+	var yearDiscontinued time.Time
 
 	validationErrors := NewValidationErrors()
 
@@ -62,7 +73,10 @@ func (app *application) createPerfumeHandler(w http.ResponseWriter, r *http.Requ
 	}
 
 	yearReleased := time.Date(req.YearReleased, time.January, 1, 0, 0, 0, 0, time.UTC)
-	yearDiscontinued := time.Date(req.YearDiscontinued, time.January, 1, 0, 0, 0, 0, time.UTC)
+	if req.YearDiscontinued != 0 {
+		yearDiscontinued = time.Date(req.YearDiscontinued, time.January, 1, 0, 0, 0, 0, time.UTC)
+	}
+
 	concentration, _ := internal.ConcentrationFromString(req.Concentration)
 	notes := make(map[internal.NoteCategory][]*internal.Note, len(req.Notes))
 
@@ -97,7 +111,24 @@ func (app *application) createPerfumeHandler(w http.ResponseWriter, r *http.Requ
 	)
 
 	if err != nil {
-		fmt.Println(err)
+		app.logger.Error(err.Error())
+		app.ServerError(w)
+		return
+	}
+
+	err = app.services.Perfume.Save(perfume)
+
+	if err != nil {
+		switch {
+		case errors.Is(err, postgresql.ErrPerfumeAlreadyExists):
+			app.JSONResponse(w, ResponseMessage{Message: "Perfume already exists", StatusCode: 422}, 422, nil)
+		case errors.Is(err, postgresql.ErrHouseNotFound):
+			validationErrors.AddError("house_id", "House not found.")
+			app.JSONResponse(w, validationErrors, 422, nil)
+		default:
+			app.logger.Error(err.Error())
+			app.ServerError(w)
+		}
 		return
 	}
 

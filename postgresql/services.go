@@ -7,6 +7,7 @@ type Services struct {
 	Note      *NoteService
 	NoteGroup *NoteGroupService
 	Perfumer  *PerfumerService
+	Perfume   *PerfumeService
 }
 
 func NewServices(db *pgx.Conn) *Services {
@@ -15,5 +16,6 @@ func NewServices(db *pgx.Conn) *Services {
 		Note:      &NoteService{db: db},
 		NoteGroup: &NoteGroupService{db: db},
 		Perfumer:  &PerfumerService{db: db},
+		Perfume:   &PerfumeService{db: db},
 	}
 }

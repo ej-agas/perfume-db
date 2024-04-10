@@ -5,19 +5,23 @@ import "fmt"
 type Concentration int
 
 const (
-	EauFraiche Concentration = iota
+	Unknown Concentration = iota
+	EauFraiche
 	EauDeCologne
 	EauDeToilette
 	EauDeParfum
 	Parfum
+	ExtraitDeParfum
 )
 
 var ConcentrationMap = map[string]Concentration{
-	"Eau Fraiche":     EauFraiche,
-	"Eau De Cologne":  EauDeCologne,
-	"Eau De Toilette": EauDeToilette,
-	"Eau De Parfum":   EauDeParfum,
-	"Parfum":          Parfum,
+	"Unknown":           Unknown,
+	"Eau Fraiche":       EauFraiche,
+	"Eau De Cologne":    EauDeCologne,
+	"Eau De Toilette":   EauDeToilette,
+	"Eau De Parfum":     EauDeParfum,
+	"Parfum":            Parfum,
+	"Extrait De Parfum": ExtraitDeParfum,
 }
 
 func ConcentrationFromString(s string) (Concentration, error) {
@@ -31,6 +35,8 @@ func ConcentrationFromString(s string) (Concentration, error) {
 
 func (c Concentration) String() string {
 	switch c {
+	case Unknown:
+		return "Unknown"
 	case EauFraiche:
 		return "Eau Fraiche"
 	case EauDeToilette:

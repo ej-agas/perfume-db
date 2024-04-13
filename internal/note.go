@@ -5,8 +5,8 @@ import "time"
 type Note struct {
 	ID          int       `json:"-"`
 	PublicId    string    `json:"id"`
-	Name        string    `json:"name"`
 	Slug        string    `json:"slug"`
+	Name        string    `json:"name"`
 	Description string    `json:"description"`
 	ImageURL    string    `json:"image_url"`
 	NoteGroupId string    `json:"note_group_id"`

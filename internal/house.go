@@ -2,7 +2,6 @@ package internal
 
 import (
 	"encoding/json"
-	"strconv"
 	"time"
 )
 
@@ -38,20 +37,14 @@ func NewHouse(name string, country string, description string, yearFounded time.
 func (h House) MarshalJSON() ([]byte, error) {
 	type Alias House
 
-	year, err := strconv.Atoi(h.YearFounded.Format("2006"))
-
-	if err != nil {
-		return nil, err
-	}
-
 	return json.Marshal(&struct {
 		*Alias
-		YearFounded int    `json:"year_founded"`
+		YearFounded string `json:"year_founded"`
 		CreatedAt   string `json:"created_at"`
 		UpdatedAt   string `json:"updated_at"`
 	}{
 		Alias:       (*Alias)(&h),
-		YearFounded: year,
+		YearFounded: h.YearFounded.Format("2006"),
 		CreatedAt:   h.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
 		UpdatedAt:   h.UpdatedAt.Format("2006-01-02T15:04:05Z07:00"),
 	})

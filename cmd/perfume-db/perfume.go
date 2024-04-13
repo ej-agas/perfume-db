@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"github.com/ej-agas/perfume-db/internal"
 	"github.com/ej-agas/perfume-db/postgresql"
 	"net/http"
@@ -24,6 +25,7 @@ func (app *application) showPerfumeBySlug(w http.ResponseWriter, r *http.Request
 	house, err := app.services.Perfume.FindBySlug(r.PathValue("slug"))
 
 	if err != nil {
+		fmt.Println(err)
 		app.NoContent(w, http.StatusNotFound)
 		return
 	}

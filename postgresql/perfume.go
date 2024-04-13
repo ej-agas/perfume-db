@@ -124,7 +124,7 @@ func (service PerfumeService) FindBySlug(slug string) (*internal.Perfume, error)
 
 	var yearDiscontinued sql.NullTime
 
-	q := `
+	perfumeQuery := `
         SELECT p.id, 
                p.public_id, 
                p.slug, 
@@ -149,7 +149,7 @@ func (service PerfumeService) FindBySlug(slug string) (*internal.Perfume, error)
         WHERE p.slug = $1
 	`
 
-	row := service.db.QueryRow(context.Background(), q, slug)
+	row := service.db.QueryRow(context.Background(), perfumeQuery, slug)
 	err := row.Scan(
 		&perfume.ID,
 		&perfume.PublicId,
@@ -181,6 +181,98 @@ func (service PerfumeService) FindBySlug(slug string) (*internal.Perfume, error)
 
 	if yearDiscontinued.Valid {
 		perfume.YearDiscontinued = yearDiscontinued.Time
+	}
+
+	perfumersQuery := `
+		SELECT
+			p.id,
+			p.public_id,
+			p.slug,
+			p.name,
+			p.nationality,
+			p.image_url,
+			p.birth_date,
+			p.created_at,
+			p.updated_at
+		FROM perfumes_perfumers
+				 LEFT JOIN perfumers p ON perfumes_perfumers.perfumer_id = p.public_id
+		WHERE perfume_id = $1;
+`
+	perfumerRows, err := service.db.Query(context.Background(), perfumersQuery, perfume.PublicId)
+	if err != nil {
+		return nil, err
+	}
+	defer perfumerRows.Close()
+
+	for perfumerRows.Next() {
+		var perfumer internal.Perfumer
+		err := perfumerRows.Scan(
+			&perfumer.ID,
+			&perfumer.PublicId,
+			&perfumer.Slug,
+			&perfumer.Name,
+			&perfumer.Nationality,
+			&perfumer.ImageURL,
+			&perfumer.BirthDate,
+			&perfumer.CreatedAt,
+			&perfumer.UpdatedAt,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		perfume.Perfumers = append(perfume.Perfumers, &perfumer)
+	}
+
+	notesQuery := `
+		SELECT
+		   category,
+		   n.id,
+		   n.public_id,
+		   n.slug,
+		   n.name,
+		   n.description,
+		   n.image_url,
+		   n.note_group_id
+		FROM perfumes_notes
+				 LEFT JOIN notes n ON perfumes_notes.note_id = n.public_id
+		WHERE perfume_id = $1;
+`
+	noteRows, err := service.db.Query(context.Background(), notesQuery, perfume.PublicId)
+	if err != nil {
+		return nil, err
+	}
+	defer noteRows.Close()
+
+	// Initialize the map to store notes
+	perfume.Notes = make(map[internal.NoteCategory][]*internal.Note)
+
+	// Process the notes
+	for noteRows.Next() {
+		var note internal.Note
+		var category string
+		err := noteRows.Scan(
+			&category,
+			&note.ID,
+			&note.PublicId,
+			&note.Slug,
+			&note.Name,
+			&note.Description,
+			&note.ImageURL,
+			&note.NoteGroupId,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		noteCategory, err := internal.NoteCategoryFromString(category)
+
+		if err != nil {
+			return nil, fmt.Errorf("error: invalid note category '%s': %w", category, err)
+		}
+
+		// Map the note to the appropriate category
+		perfume.Notes[noteCategory] = append(perfume.Notes[noteCategory], &note)
 	}
 
 	return &perfume, nil

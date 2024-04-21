@@ -1,6 +1,8 @@
 package postgresql
 
-import "github.com/jackc/pgx/v5"
+import (
+	"github.com/jackc/pgx/v5/pgxpool"
+)
 
 type Services struct {
 	House     *HouseService
@@ -10,7 +12,7 @@ type Services struct {
 	Perfume   *PerfumeService
 }
 
-func NewServices(db *pgx.Conn) *Services {
+func NewServices(db *pgxpool.Pool) *Services {
 	return &Services{
 		House:     &HouseService{db: db},
 		Note:      &NoteService{db: db},

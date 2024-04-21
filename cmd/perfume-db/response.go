@@ -2,8 +2,9 @@ package main
 
 import (
 	"encoding/json"
-	"github.com/ej-agas/perfume-db/internal"
 	"net/http"
+
+	"github.com/ej-agas/perfume-db/internal"
 )
 
 type ResponseMessage struct {

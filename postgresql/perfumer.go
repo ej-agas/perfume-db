@@ -4,10 +4,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/ej-agas/perfume-db/internal"
-	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgconn"
 	"strings"
+
+	"github.com/ej-agas/perfume-db/internal"
+	"github.com/jackc/pgx/v5/pgconn"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 var (
@@ -16,7 +17,7 @@ var (
 )
 
 type PerfumerService struct {
-	db *pgx.Conn
+	db *pgxpool.Pool
 }
 
 func (service PerfumerService) List(cursor, perPage int) ([]internal.Perfumer, error) {

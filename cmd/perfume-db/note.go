@@ -3,10 +3,11 @@ package main
 import (
 	"encoding/json"
 	"errors"
-	"github.com/ej-agas/perfume-db/internal"
-	"github.com/ej-agas/perfume-db/postgresql"
 	"net/http"
 	"strconv"
+
+	"github.com/ej-agas/perfume-db/internal"
+	"github.com/ej-agas/perfume-db/postgresql"
 )
 
 type createNoteRequest struct {

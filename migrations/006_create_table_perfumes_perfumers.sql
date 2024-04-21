@@ -2,7 +2,8 @@ create table perfumes_perfumers(
     perfume_id varchar not null,
     perfumer_id varchar not null,
     constraint fk_perfume_id foreign key (perfume_id) references perfumes (public_id),
-    constraint fk_perfumer_id foreign key (perfumer_id) references perfumers (public_id)
+    constraint fk_perfumer_id foreign key (perfumer_id) references perfumers (public_id),
+    constraint unique_perfume_id_perfumer_id unique (perfume_id, perfumer_id)
 );
 
 ---- create above / drop below ----

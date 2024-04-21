@@ -3,16 +3,17 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/ej-agas/perfume-db/internal"
-	"github.com/ej-agas/perfume-db/nanoid"
-	"github.com/ej-agas/perfume-db/postgresql"
-	"github.com/go-playground/validator/v10"
-	"github.com/jackc/pgx/v5"
 	"log"
 	"log/slog"
 	"net/http"
 	"os"
 	"strconv"
+
+	"github.com/ej-agas/perfume-db/internal"
+	"github.com/ej-agas/perfume-db/nanoid"
+	"github.com/ej-agas/perfume-db/postgresql"
+	"github.com/go-playground/validator/v10"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type config struct {
@@ -58,16 +59,16 @@ func main() {
 		os.Getenv("DB_NAME"),
 	)
 
-	connConfig, err := pgx.ParseConfig(connString)
+	connConfig, err := pgxpool.ParseConfig(connString)
 	if err != nil {
 		panic(err)
 	}
 
-	conn, err := pgx.ConnectConfig(context.Background(), connConfig)
+	conn, err := pgxpool.NewWithConfig(context.Background(), connConfig)
 	if err != nil {
 		panic(err)
 	}
-	defer conn.Close(context.Background())
+	defer conn.Close()
 
 	idAlphabet := "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
 	idLength := 16

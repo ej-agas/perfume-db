@@ -49,6 +49,7 @@ func (app *application) routes() http.Handler {
 	router.HandleFunc("GET /perfumers/{slug}", app.showPerfumerBySlugHandler)
 
 	router.HandleFunc("POST /perfumes", app.createPerfumeHandler)
+	router.HandleFunc("PATCH /perfumes/{publicId}", app.updatePerfumeHandler)
 	router.HandleFunc("GET /perfumes/{slug}", app.showPerfumeBySlug)
 
 	return router

@@ -4,15 +4,16 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/ej-agas/perfume-db/internal"
-	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgconn"
 	"strings"
 	"time"
+
+	"github.com/ej-agas/perfume-db/internal"
+	"github.com/jackc/pgx/v5/pgconn"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type NoteService struct {
-	db *pgx.Conn
+	db *pgxpool.Pool
 }
 
 var (
@@ -183,7 +184,11 @@ func (service NoteService) FindBySlug(s string) (*internal.Note, error) {
 }
 
 func (service NoteService) FindMany(publicIds []string) ([]*internal.Note, error) {
-	var notes []*internal.Note
+	notes := make([]*internal.Note, 0)
+
+	if len(publicIds) == 0 {
+		return notes, nil
+	}
 
 	placeholders := make([]string, len(publicIds))
 	args := make([]interface{}, len(publicIds))

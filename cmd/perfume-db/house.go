@@ -3,11 +3,12 @@ package main
 import (
 	"encoding/json"
 	"errors"
-	"github.com/ej-agas/perfume-db/internal"
-	"github.com/ej-agas/perfume-db/postgresql"
 	"net/http"
 	"strconv"
 	"time"
+
+	"github.com/ej-agas/perfume-db/internal"
+	"github.com/ej-agas/perfume-db/postgresql"
 )
 
 type createHouseRequest struct {

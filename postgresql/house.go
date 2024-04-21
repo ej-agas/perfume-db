@@ -4,14 +4,15 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/ej-agas/perfume-db/internal"
-	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgconn"
 	"time"
+
+	"github.com/ej-agas/perfume-db/internal"
+	"github.com/jackc/pgx/v5/pgconn"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type HouseService struct {
-	db *pgx.Conn
+	db *pgxpool.Pool
 }
 
 var (

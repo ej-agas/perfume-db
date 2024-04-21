@@ -3,12 +3,13 @@ package main
 import (
 	"errors"
 	"fmt"
-	"github.com/ej-agas/perfume-db/internal"
-	"github.com/go-playground/validator/v10"
 	"strconv"
 	"strings"
 	"time"
 	"unicode"
+
+	"github.com/ej-agas/perfume-db/internal"
+	"github.com/go-playground/validator/v10"
 )
 
 type ValidationErrors struct {
@@ -59,7 +60,7 @@ func CreateResponseFromErrors(err error) *ValidationErrors {
 		case "fragranceConcentration":
 			message := fmt.Sprintf("The selected %s is invalid", field)
 			response.AddError(jsonTag, message)
-		case "notes":
+		case "noteCategory":
 			message := fmt.Sprintf("The %s field contains invalid note category.", field)
 			response.AddError(jsonTag, message)
 		case "noteCount":

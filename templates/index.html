@@ -1,0 +1,55 @@
+{{define "content"}}
+<div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+    <!-- Houses Section -->
+    <div class="bg-white p-6 rounded-lg shadow-md">
+        <h2 class="text-xl font-semibold mb-4">Perfume Houses</h2>
+        <div id="houses-list" hx-get="/ui/houses" hx-trigger="load">
+            <p class="text-gray-500">Loading perfume houses...</p>
+        </div>
+        <div class="mt-4">
+            <button hx-get="/ui/houses/new" 
+                    hx-target="#modal-content"
+                    hx-trigger="click"
+                    @click="modalOpen = true"
+                    class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded">
+                Add New House
+            </button>
+        </div>
+    </div>
+
+    <!-- Notes Section -->
+    <div class="bg-white p-6 rounded-lg shadow-md">
+        <h2 class="text-xl font-semibold mb-4">Fragrance Notes</h2>
+        <div id="notes-list" hx-get="/ui/notes" hx-trigger="load">
+            <p class="text-gray-500">Loading fragrance notes...</p>
+        </div>
+        <div class="mt-4">
+            <button class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded">
+                Add New Note
+            </button>
+        </div>
+    </div>
+
+    <!-- Perfumers Section -->
+    <div class="bg-white p-6 rounded-lg shadow-md">
+        <h2 class="text-xl font-semibold mb-4">Perfumers</h2>
+        <div id="perfumers-list" hx-get="/ui/perfumers" hx-trigger="load">
+            <p class="text-gray-500">Loading perfumers...</p>
+        </div>
+        <div class="mt-4">
+            <button class="bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded">
+                Add New Perfumer
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal -->
+<div x-data="{ modalOpen: false }" x-show="modalOpen" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4" @click.self="modalOpen = false">
+    <div class="bg-white rounded-lg p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+        <div id="modal-content">
+            <!-- Modal content will be loaded here -->
+        </div>
+    </div>
+</div>
+{{end}}

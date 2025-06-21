@@ -7,15 +7,24 @@ RUN /sbin/apk update && \
 RUN adduser -D -g '' perfume_db_user
 WORKDIR /home/perfume_db_user
 
-COPY go.mod /home/perfume_db_user
-COPY go.sum /home/perfume_db_user
-
+COPY go.mod go.sum ./
 RUN go mod download
 
-COPY cmd /home/perfume_db_user/cmd
-COPY internal /home/perfume_db_user/internal
-COPY postgresql /home/perfume_db_user/postgresql
+# Copy source code
+COPY cmd ./cmd
+COPY internal ./internal
+COPY postgresql ./postgresql
 
+# Create necessary directories
+RUN mkdir -p /home/perfume_db_user/templates \
+    && mkdir -p /home/perfume_db_user/static/css \
+    && chown -R perfume_db_user:perfume_db_user /home/perfume_db_user
+
+# Copy templates and static files with correct permissions
+COPY --chown=perfume_db_user:perfume_db_user templates/ /home/perfume_db_user/templates/
+COPY --chown=perfume_db_user:perfume_db_user static/ /home/perfume_db_user/static/
+
+# Copy the rest of the application
 COPY . .
 
 ARG VERSION

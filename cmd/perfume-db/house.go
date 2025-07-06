@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"strconv"
 	"time"
@@ -92,7 +93,7 @@ func (app *application) listHouses(w http.ResponseWriter, r *http.Request) {
 	var newCursor string
 	if len(houses) == perPage {
 		lastHouse := houses[len(houses)-1]
-		newCursor, _ = app.Encrypt([]byte(strconv.Itoa(lastHouse.ID)))
+		newCursor, _ = app.Encrypt([]byte(lastHouse.ID))
 	}
 
 	res := Paginated[internal.House]{
@@ -113,6 +114,7 @@ func (app *application) showHouseBySlug(w http.ResponseWriter, r *http.Request) 
 	house, err := app.services.House.FindBySlug(r.PathValue("slug"))
 
 	if err != nil {
+		fmt.Println(err)
 		app.NoContent(w, http.StatusNotFound)
 		return
 	}
@@ -155,7 +157,7 @@ func (app *application) updateHouseByPublicId(w http.ResponseWriter, r *http.Req
 	}
 
 	if requestData.YearFounded != 0 {
-		house.YearFounded = time.Date(requestData.YearFounded, time.January, 1, 0, 0, 0, 0, time.UTC)
+		house.FoundedAt = time.Date(requestData.YearFounded, time.January, 1, 0, 0, 0, 0, time.UTC)
 	}
 
 	if err := app.services.House.Save(house); err != nil {

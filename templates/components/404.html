@@ -1,0 +1,19 @@
+{{- define "404" -}}
+<div class="max-w-4xl mx-auto p-6">
+    <div class="bg-white p-8 rounded-lg shadow-md">
+        <h1 class="text-3xl font-bold text-gray-800 mb-2">House Not Found</h1>
+    </div>
+    <div class="mt-8">
+        <a href="/"
+           hx-get="/"
+           hx-target="main"
+           hx-push-url="true"
+           hx-swap="innerHTML"
+           hx-select="main"
+           hx-select-oob="true"
+           class="text-blue-600 hover:text-blue-800 cursor-pointer">
+            &larr; Back to all houses
+        </a>
+    </div>
+</div>
+{{- end -}}

@@ -16,7 +16,7 @@ func (factory Factory) NewNote(Name, Description, ImageURL, NoteGroupId string) 
 	}
 
 	return &Note{
-		PublicId:    id,
+		ID:          id,
 		Name:        Name,
 		Slug:        CreateSlug(Name),
 		Description: Description,
@@ -29,13 +29,8 @@ func (factory Factory) NewNote(Name, Description, ImageURL, NoteGroupId string) 
 
 func (factory Factory) NewNoteGroup(Name, Description, ImageURL string) (*NoteGroup, error) {
 	now := time.Now()
-	id, err := factory.IdGenerator.Generate()
-	if err != nil {
-		return &NoteGroup{}, err
-	}
 
 	return &NoteGroup{
-		PublicId:    id,
 		Name:        Name,
 		Slug:        CreateSlug(Name),
 		Description: Description,
@@ -45,20 +40,15 @@ func (factory Factory) NewNoteGroup(Name, Description, ImageURL string) (*NoteGr
 	}, nil
 }
 
-func (factory Factory) NewHouse(name, country, description string, yearFounded time.Time) (*House, error) {
+func (factory Factory) NewHouse(name, country, description string, foundedAt time.Time) (*House, error) {
 	now := time.Now()
-	id, err := factory.IdGenerator.Generate()
-	if err != nil {
-		return &House{}, err
-	}
 
 	return &House{
-		PublicId:    id,
 		Name:        name,
 		Slug:        CreateSlug(name),
 		Country:     country,
 		Description: description,
-		YearFounded: yearFounded,
+		FoundedAt:   foundedAt,
 		CreatedAt:   now,
 		UpdatedAt:   now,
 	}, nil
@@ -66,13 +56,8 @@ func (factory Factory) NewHouse(name, country, description string, yearFounded t
 
 func (factory Factory) NewPerfumer(name, nationality, imageUrl string, birthDate time.Time) (*Perfumer, error) {
 	now := time.Now()
-	id, err := factory.IdGenerator.Generate()
-	if err != nil {
-		return &Perfumer{}, err
-	}
 
 	return &Perfumer{
-		PublicId:    id,
 		Slug:        CreateSlug(name),
 		Name:        name,
 		Nationality: nationality,
@@ -91,7 +76,7 @@ func (factory Factory) NewPerfume(opts ...PerfumeOption) (*Perfume, error) {
 	}
 
 	p := &Perfume{
-		PublicId:  id,
+		ID:        id,
 		CreatedAt: now,
 		UpdatedAt: now,
 	}

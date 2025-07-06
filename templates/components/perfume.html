@@ -1,0 +1,74 @@
+{{define "perfume"}}
+<div class="max-w-4xl mx-auto p-6">
+    {{- if .Perfume.ImageURL -}}
+    <div class="mb-6">
+        <img src="{{.ImageURL}}" alt="{{.Name}}" class="w-full h-64 object-cover rounded-lg">
+    </div>
+    {{- end -}}
+    <div class="bg-white p-8 rounded-lg shadow-md">
+        <h1 class="text-3xl font-bold text-gray-800 mb-2">{{.Perfume.Name}} by <a
+                href="/houses/{{.House.Slug}}"
+                hx-get="/houses/{{.House.Slug}}"
+                hx-target="main"
+                hx-push-url="true"
+                hx-swap="innerHTML"
+                class="text-blue-600 hover:text-blue-800 hover:underline transition-colors duration-100"
+        >{{.House.Name}}</a></h1>
+        <div class="flex items-center text-gray-600 mb-6">
+            <span class="mr-4"></span>
+            {{- if .Perfume.ReleasedAt -}}
+            <span>Released in {{.Perfume.ReleasedAt.Year}}</span>
+            {{- end -}}
+        </div>
+        {{- if .Perfume.Description -}}
+        <div class="prose max-w-none">
+            {{.Perfume.Description | safeHTML}}
+        </div>
+        {{- end -}}
+        <div class="mt-12">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6">Perfumers</h2>
+            {{- if .Perfumers -}}
+            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-6">
+                {{- range .Perfumers -}}
+                <div class="flex flex-col items-center text-center group cursor-pointer"
+                     hx-get="/perfumers/{{.Slug}}"
+                     hx-target="main"
+                     hx-push-url="true"
+                     hx-swap="innerHTML">
+                    <div class="w-24 h-24 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden mb-2 group-hover:ring-2 group-hover:ring-blue-400 transition-all duration-200">
+                        {{- if .ImageURL -}}
+                        <img src="{{.ImageURL}}" alt="{{.Name}}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200">
+                        {{- else -}}
+                        <div class="w-full h-full flex items-center justify-center bg-gray-100 group-hover:bg-gray-200 transition-colors duration-200">
+                            <svg class="w-12 h-12 text-gray-400" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                                <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"></path>
+                            </svg>
+                        </div>
+                        {{- end -}}
+                    </div>
+                    <span class="text-sm font-medium text-gray-700 group-hover:text-blue-600 transition-colors duration-200">{{.Name}}</span>
+                    {{- if .Nationality -}}
+                    <span class="text-xs text-gray-500">{{.Nationality}}</span>
+                    {{- end -}}
+                </div>
+                {{- end -}}
+            </div>
+            {{- else -}}
+            <p class="text-gray-500 italic">No perfumers listed for this fragrance.</p>
+            {{- end -}}
+        </div>
+    </div>
+    <div class="mt-8">
+        <a href="/"
+           hx-get="/"
+           hx-target="main"
+           hx-push-url="true"
+           hx-swap="innerHTML"
+           hx-select="main"
+           hx-select-oob="true"
+           class="text-blue-600 hover:text-blue-800 cursor-pointer">
+            &larr; Back to all houses
+        </a>
+    </div>
+</div>
+{{end}}

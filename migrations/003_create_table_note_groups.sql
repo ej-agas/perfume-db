@@ -1,6 +1,5 @@
 create table note_groups(
-    id serial primary key,
-    public_id varchar not null,
+    id uuid DEFAULT uuidv7() primary key,
     slug text not null,
     name varchar not null,
     description text,
@@ -9,7 +8,6 @@ create table note_groups(
     updated_at timestamp
 );
 
-create unique index note_groups_unique_public_id__idx on note_groups (public_id);
 create unique index note_groups_unique_slug__idx on note_groups (slug);
 create unique index note_groups_unique_name__idx on note_groups (name);
 

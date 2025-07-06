@@ -3,8 +3,7 @@ package internal
 import "time"
 
 type NoteGroup struct {
-	ID          int       `json:"-"`
-	PublicId    string    `json:"id"`
+	ID          string    `json:"-"`
 	Name        string    `json:"name"`
 	Slug        string    `json:"slug"`
 	Description string    `json:"description"`
@@ -13,7 +12,7 @@ type NoteGroup struct {
 	UpdatedAt   time.Time `json:"updated_at"`
 }
 
-func (n NoteGroup) GetID() int {
+func (n NoteGroup) GetID() string {
 	return n.ID
 }
 

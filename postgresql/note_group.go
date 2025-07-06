@@ -35,7 +35,6 @@ func (service NoteGroupService) List(cursor, perPage int) ([]internal.NoteGroup,
 		var note internal.NoteGroup
 		err := rows.Scan(
 			&note.ID,
-			&note.PublicId,
 			&note.Slug,
 			&note.Name,
 			&note.Description,
@@ -57,7 +56,7 @@ func (service NoteGroupService) List(cursor, perPage int) ([]internal.NoteGroup,
 }
 
 func (service NoteGroupService) Save(note *internal.NoteGroup) error {
-	if note.ID == 0 {
+	if note.ID == "" {
 		return service.saveNewNoteGroup(note)
 	}
 
@@ -66,13 +65,12 @@ func (service NoteGroupService) Save(note *internal.NoteGroup) error {
 
 func (service NoteGroupService) saveNewNoteGroup(noteGroup *internal.NoteGroup) error {
 	q := `
-		INSERT INTO note_groups (public_id, slug, name, description, image_url, created_at, updated_at)
+		INSERT INTO note_groups (slug, name, description, image_url, created_at, updated_at)
 		VALUES ($1, $2, $3, $4, $5, $6, $7)
 	`
 	_, err := service.db.Exec(
 		context.Background(),
 		q,
-		noteGroup.PublicId,
 		noteGroup.Slug,
 		noteGroup.Name,
 		noteGroup.Description,
@@ -130,12 +128,11 @@ func (service NoteGroupService) updateNoteGroup(noteGroup *internal.NoteGroup) e
 func (service NoteGroupService) Find(publicId string) (*internal.NoteGroup, error) {
 	var noteGroup internal.NoteGroup
 
-	q := `SELECT * FROM note_groups WHERE public_id = $1`
+	q := `SELECT * FROM note_groups WHERE id = $1`
 
 	if err := service.db.QueryRow(context.Background(), q, publicId).
 		Scan(
 			&noteGroup.ID,
-			&noteGroup.PublicId,
 			&noteGroup.Name,
 			&noteGroup.Slug,
 			&noteGroup.Description,
@@ -157,7 +154,6 @@ func (service NoteGroupService) FindBySlug(s string) (*internal.NoteGroup, error
 	if err := service.db.QueryRow(context.Background(), q, s).
 		Scan(
 			&noteGroup.ID,
-			&noteGroup.PublicId,
 			&noteGroup.Name,
 			&noteGroup.Slug,
 			&noteGroup.Description,

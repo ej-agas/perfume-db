@@ -23,7 +23,7 @@ type PerfumeService struct {
 }
 
 func (service PerfumeService) Save(perfume *internal.Perfume) error {
-	if perfume.ID == 0 {
+	if perfume.ID == "" {
 		return service.saveNewPerfume(perfume)
 	}
 
@@ -41,17 +41,16 @@ func (service PerfumeService) saveNewPerfume(perfume *internal.Perfume) error {
 	_, err = tx.Exec(
 		context.Background(),
 		`
-		INSERT INTO perfumes (public_id, slug, name, description, concentration, image_url, house_id, year_released, year_discontinued, created_at, updated_at)
+		INSERT INTO perfumes (slug, name, description, concentration, image_url, house_id, released_at, discontinued_at, created_at, updated_at)
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
 	`,
-		perfume.PublicId,
 		perfume.Slug,
 		perfume.Name,
 		perfume.Description,
 		perfume.Concentration,
 		perfume.ImageURL,
-		perfume.House.PublicId,
-		perfume.YearReleased,
+		perfume.House.ID,
+		perfume.ReleasedAt,
 		service.convertToNullIfZeroValue(perfume.YearDiscontinued),
 		perfume.CreatedAt,
 		perfume.UpdatedAt,
@@ -82,8 +81,8 @@ func (service PerfumeService) saveNewPerfume(perfume *internal.Perfume) error {
                 INSERT INTO perfumes_notes (perfume_id, note_id, category)
                 VALUES ($1, $2, $3)
                 `,
-				perfume.PublicId,
-				note.PublicId,
+				perfume.ID,
+				note.ID,
 				category,
 			)
 			if err != nil {
@@ -99,8 +98,8 @@ func (service PerfumeService) saveNewPerfume(perfume *internal.Perfume) error {
 			INSERT INTO perfumes_perfumers (perfume_id, perfumer_id)
 			VALUES ($1, $2)
 			`,
-			perfume.PublicId,
-			perfumer.PublicId,
+			perfume.ID,
+			perfumer.ID,
 		)
 		if err != nil {
 			return err
@@ -139,23 +138,23 @@ func (service PerfumeService) updatePerfume(perfume *internal.Perfume) error {
 			 concentration = $4,
 			 image_url = $5,
 			 house_id = $6,
-			 year_released = $7,
-			 year_discontinued = $8,
+			 released_at = $7,
+			 discontinued_at = $8,
 			 created_at = $9,
 			 updated_at = $10
-		WHERE public_id = $11
+		WHERE id = $11
 	`,
 		perfume.Slug,
 		perfume.Name,
 		perfume.Description,
 		perfume.Concentration,
 		perfume.ImageURL,
-		perfume.House.PublicId,
-		perfume.YearReleased,
+		perfume.House.ID,
+		perfume.ReleasedAt,
 		service.convertToNullIfZeroValue(perfume.YearDiscontinued),
 		perfume.CreatedAt,
 		perfume.UpdatedAt,
-		perfume.PublicId,
+		perfume.ID,
 	)
 
 	if err != nil {
@@ -180,7 +179,7 @@ func (service PerfumeService) updatePerfume(perfume *internal.Perfume) error {
 		args := make([]interface{}, len(notes))
 		for i, note := range notes {
 			placeholders[i] = fmt.Sprintf("$%d", i+1)
-			args[i] = note.PublicId
+			args[i] = note.ID
 		}
 
 		var q string
@@ -192,10 +191,10 @@ func (service PerfumeService) updatePerfume(perfume *internal.Perfume) error {
 				len(args)+2,
 			)
 
-			args = append(args, perfume.PublicId, category)
+			args = append(args, perfume.ID, category)
 		} else {
 			q = `DELETE FROM perfumes_notes WHERE perfume_id = $1 AND category = $2`
-			args = append(args, perfume.PublicId, category)
+			args = append(args, perfume.ID, category)
 		}
 
 		if _, err := tx.Exec(context.Background(), q, args...); err != nil {
@@ -209,8 +208,8 @@ func (service PerfumeService) updatePerfume(perfume *internal.Perfume) error {
 	           INSERT INTO perfumes_notes (perfume_id, note_id, category)
 	           VALUES ($1, $2, $3) ON CONFLICT (perfume_id, note_id) DO NOTHING 
 	           `,
-				perfume.PublicId,
-				note.PublicId,
+				perfume.ID,
+				note.ID,
 				category,
 			)
 			if err != nil {
@@ -223,7 +222,7 @@ func (service PerfumeService) updatePerfume(perfume *internal.Perfume) error {
 	args := make([]interface{}, len(perfume.Perfumers))
 	for i, perfumer := range perfume.Perfumers {
 		placeholders[i] = fmt.Sprintf("$%d", i+1)
-		args[i] = perfumer.PublicId
+		args[i] = perfumer.ID
 	}
 
 	var q string
@@ -233,10 +232,10 @@ func (service PerfumeService) updatePerfume(perfume *internal.Perfume) error {
 			strings.Join(placeholders, ", "),
 			len(args)+1,
 		)
-		args = append(args, perfume.PublicId)
+		args = append(args, perfume.ID)
 	} else {
 		q = `DELETE FROM perfumes_perfumers WHERE perfume_id = $1`
-		args = append(args, perfume.PublicId)
+		args = append(args, perfume.ID)
 	}
 	fmt.Println(q, args)
 	if _, err := service.db.Exec(context.Background(), q, args...); err != nil {
@@ -250,8 +249,8 @@ func (service PerfumeService) updatePerfume(perfume *internal.Perfume) error {
 			INSERT INTO perfumes_perfumers (perfume_id, perfumer_id)
 			VALUES ($1, $2) ON CONFLICT (perfume_id, perfumer_id) DO NOTHING
 			`,
-			perfume.PublicId,
-			perfumer.PublicId,
+			perfume.ID,
+			perfumer.ID,
 		)
 		if err != nil {
 			return fmt.Errorf("update perfume error: insert into perfume_perfumers query error: %w", err)
@@ -279,14 +278,13 @@ func (service PerfumeService) Find(publicId string) (*internal.Perfume, error) {
 
 	perfumeQuery := `
         SELECT p.id, 
-               p.public_id, 
                p.slug, 
                p.name, 
                p.description, 
                p.concentration, 
                p.image_url, 
-               p.year_released, 
-               p.year_discontinued, 
+               p.released_at, 
+               p.discontinued_at, 
                p.created_at, 
                p.updated_at,
 			   p.house_id,
@@ -294,33 +292,32 @@ func (service PerfumeService) Find(publicId string) (*internal.Perfume, error) {
                h.name AS house_name,
                h.country AS house_country,
                h.description AS house_description,
-               h.year_founded AS house_year_founded,
+               h.founded_at AS house_year_founded,
                h.created_at AS house_created_at,
                h.updated_at AS house_updated_at
         FROM perfumes p
-        LEFT JOIN houses h ON p.house_id = h.public_id
-        WHERE p.public_id = $1
+        LEFT JOIN houses h ON p.house_id = h.id
+        WHERE p.id = $1
 	`
 
 	row := service.db.QueryRow(context.Background(), perfumeQuery, publicId)
 	err := row.Scan(
 		&perfume.ID,
-		&perfume.PublicId,
 		&perfume.Slug,
 		&perfume.Name,
 		&perfume.Description,
 		&perfume.Concentration,
 		&perfume.ImageURL,
-		&perfume.YearReleased,
+		&perfume.ReleasedAt,
 		&yearDiscontinued,
 		&perfume.CreatedAt,
 		&perfume.UpdatedAt,
-		&perfume.House.PublicId,
+		&perfume.House.ID,
 		&perfume.House.Slug,
 		&perfume.House.Name,
 		&perfume.House.Country,
 		&perfume.House.Description,
-		&perfume.House.YearFounded,
+		&perfume.House.FoundedAt,
 		&perfume.House.CreatedAt,
 		&perfume.House.UpdatedAt,
 	)
@@ -339,7 +336,6 @@ func (service PerfumeService) Find(publicId string) (*internal.Perfume, error) {
 	perfumersQuery := `
 		SELECT
 			p.id,
-			p.public_id,
 			p.slug,
 			p.name,
 			p.nationality,
@@ -348,10 +344,10 @@ func (service PerfumeService) Find(publicId string) (*internal.Perfume, error) {
 			p.created_at,
 			p.updated_at
 		FROM perfumes_perfumers
-				 LEFT JOIN perfumers p ON perfumes_perfumers.perfumer_id = p.public_id
+				 LEFT JOIN perfumers p ON perfumes_perfumers.perfumer_id = p.id
 		WHERE perfume_id = $1;
 `
-	perfumerRows, err := service.db.Query(context.Background(), perfumersQuery, perfume.PublicId)
+	perfumerRows, err := service.db.Query(context.Background(), perfumersQuery, perfume.ID)
 	if err != nil {
 		return nil, err
 	}
@@ -361,7 +357,6 @@ func (service PerfumeService) Find(publicId string) (*internal.Perfume, error) {
 		var perfumer internal.Perfumer
 		err := perfumerRows.Scan(
 			&perfumer.ID,
-			&perfumer.PublicId,
 			&perfumer.Slug,
 			&perfumer.Name,
 			&perfumer.Nationality,
@@ -381,17 +376,16 @@ func (service PerfumeService) Find(publicId string) (*internal.Perfume, error) {
 		SELECT
 		   category,
 		   n.id,
-		   n.public_id,
 		   n.slug,
 		   n.name,
 		   n.description,
 		   n.image_url,
 		   n.note_group_id
 		FROM perfumes_notes
-				 LEFT JOIN notes n ON perfumes_notes.note_id = n.public_id
+				 LEFT JOIN notes n ON perfumes_notes.note_id = n.id
 		WHERE perfume_id = $1;
 `
-	noteRows, err := service.db.Query(context.Background(), notesQuery, perfume.PublicId)
+	noteRows, err := service.db.Query(context.Background(), notesQuery, perfume.ID)
 	if err != nil {
 		return nil, err
 	}
@@ -407,7 +401,6 @@ func (service PerfumeService) Find(publicId string) (*internal.Perfume, error) {
 		err := noteRows.Scan(
 			&category,
 			&note.ID,
-			&note.PublicId,
 			&note.Slug,
 			&note.Name,
 			&note.Description,
@@ -439,14 +432,13 @@ func (service PerfumeService) FindBySlug(slug string) (*internal.Perfume, error)
 
 	perfumeQuery := `
         SELECT p.id, 
-               p.public_id, 
                p.slug, 
                p.name, 
                p.description, 
                p.concentration, 
                p.image_url, 
-               p.year_released, 
-               p.year_discontinued, 
+               p.released_at, 
+               p.discontinued_at, 
                p.created_at, 
                p.updated_at,
 			   p.house_id,
@@ -454,11 +446,11 @@ func (service PerfumeService) FindBySlug(slug string) (*internal.Perfume, error)
                h.name AS house_name,
                h.country AS house_country,
                h.description AS house_description,
-               h.year_founded AS house_year_founded,
+               h.founded_at AS house_year_founded,
                h.created_at AS house_created_at,
                h.updated_at AS house_updated_at
         FROM perfumes p
-        LEFT JOIN houses h ON p.house_id = h.public_id
+        LEFT JOIN houses h ON p.house_id = h.id
         WHERE p.slug = $1
 	`
 
@@ -472,22 +464,21 @@ func (service PerfumeService) FindBySlug(slug string) (*internal.Perfume, error)
 	row := conn.QueryRow(context.Background(), perfumeQuery, slug)
 	err = row.Scan(
 		&perfume.ID,
-		&perfume.PublicId,
 		&perfume.Slug,
 		&perfume.Name,
 		&perfume.Description,
 		&perfume.Concentration,
 		&perfume.ImageURL,
-		&perfume.YearReleased,
+		&perfume.ReleasedAt,
 		&yearDiscontinued,
 		&perfume.CreatedAt,
 		&perfume.UpdatedAt,
-		&perfume.House.PublicId,
+		&perfume.House.ID,
 		&perfume.House.Slug,
 		&perfume.House.Name,
 		&perfume.House.Country,
 		&perfume.House.Description,
-		&perfume.House.YearFounded,
+		&perfume.House.FoundedAt,
 		&perfume.House.CreatedAt,
 		&perfume.House.UpdatedAt,
 	)
@@ -504,61 +495,71 @@ func (service PerfumeService) FindBySlug(slug string) (*internal.Perfume, error)
 	}
 
 	perfumersQuery := `
-		SELECT
-			p.id,
-			p.public_id,
-			p.slug,
-			p.name,
-			p.nationality,
-			p.image_url,
-			p.birth_date,
-			p.created_at,
-			p.updated_at
-		FROM perfumes_perfumers
-				 LEFT JOIN perfumers p ON perfumes_perfumers.perfumer_id = p.public_id
-		WHERE perfume_id = $1;
+    SELECT
+        p.id,
+        p.slug,
+        p.name,
+        p.nationality,
+        COALESCE(p.image_url, '') as image_url,
+        p.birth_date,
+        p.created_at,
+        p.updated_at
+    FROM perfumes_perfumers
+    LEFT JOIN perfumers p ON perfumes_perfumers.perfumer_id = p.id
+    WHERE perfume_id = $1;
 `
-	perfumerRows, err := service.db.Query(context.Background(), perfumersQuery, perfume.PublicId)
+	perfumerRows, err := service.db.Query(context.Background(), perfumersQuery, perfume.ID)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error querying perfumers: %w", err)
 	}
 	defer perfumerRows.Close()
 
+	var perfumers []*internal.Perfumer
 	for perfumerRows.Next() {
 		var perfumer internal.Perfumer
+		var birthDate sql.NullTime
+
 		err := perfumerRows.Scan(
 			&perfumer.ID,
-			&perfumer.PublicId,
 			&perfumer.Slug,
 			&perfumer.Name,
 			&perfumer.Nationality,
 			&perfumer.ImageURL,
-			&perfumer.BirthDate,
+			&birthDate,
 			&perfumer.CreatedAt,
 			&perfumer.UpdatedAt,
 		)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("error scanning perfumer: %w", err)
 		}
 
-		perfume.Perfumers = append(perfume.Perfumers, &perfumer)
+		if birthDate.Valid {
+			perfumer.BirthDate = birthDate.Time
+		}
+
+		perfumers = append(perfumers, &perfumer)
 	}
+
+	if err = perfumerRows.Err(); err != nil {
+		return nil, fmt.Errorf("error iterating perfumers: %w", err)
+	}
+
+	perfume.Perfumers = perfumers
 
 	notesQuery := `
 		SELECT
 		   category,
 		   n.id,
-		   n.public_id,
 		   n.slug,
 		   n.name,
 		   n.description,
 		   n.image_url,
 		   n.note_group_id
 		FROM perfumes_notes
-				 LEFT JOIN notes n ON perfumes_notes.note_id = n.public_id
+				 LEFT JOIN notes n ON perfumes_notes.note_id = n.id
 		WHERE perfume_id = $1;
 `
-	noteRows, err := service.db.Query(context.Background(), notesQuery, perfume.PublicId)
+	noteRows, err := service.db.Query(context.Background(), notesQuery, perfume.ID)
 	if err != nil {
 		return nil, err
 	}
@@ -574,7 +575,6 @@ func (service PerfumeService) FindBySlug(slug string) (*internal.Perfume, error)
 		err := noteRows.Scan(
 			&category,
 			&note.ID,
-			&note.PublicId,
 			&note.Slug,
 			&note.Name,
 			&note.Description,
@@ -596,6 +596,80 @@ func (service PerfumeService) FindBySlug(slug string) (*internal.Perfume, error)
 	}
 
 	return &perfume, nil
+}
+
+func (service PerfumeService) FindByPerfumer(perfumerID string) ([]*internal.Perfume, error) {
+	query := `
+        SELECT 
+            p.id, 
+            p.slug, 
+            p.name, 
+            p.description, 
+            p.concentration, 
+            COALESCE(p.image_url, '') as image_url,
+            p.released_at, 
+            p.discontinued_at, 
+            p.created_at, 
+            p.updated_at,
+            p.house_id,
+            h.slug AS house_slug,
+            h.name AS house_name,
+            h.country AS house_country,
+            COALESCE(h.image_url, '') AS house_image_url
+        FROM perfumes p
+        JOIN houses h ON p.house_id = h.id
+        JOIN perfumes_perfumers pp ON p.id = pp.perfume_id
+        WHERE pp.perfumer_id = $1
+        ORDER BY p.name
+    `
+
+	rows, err := service.db.Query(context.Background(), query, perfumerID)
+	if err != nil {
+		return nil, fmt.Errorf("error querying perfumes by perfumer: %w", err)
+	}
+	defer rows.Close()
+
+	var perfumes []*internal.Perfume
+	for rows.Next() {
+		var p internal.Perfume
+		var yearDiscontinued sql.NullTime
+		var house internal.House
+
+		err := rows.Scan(
+			&p.ID,
+			&p.Slug,
+			&p.Name,
+			&p.Description,
+			&p.Concentration,
+			&p.ImageURL,
+			&p.ReleasedAt,
+			&yearDiscontinued,
+			&p.CreatedAt,
+			&p.UpdatedAt,
+			&house.ID,
+			&house.Slug,
+			&house.Name,
+			&house.Country,
+			&house.ImageURL,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("error scanning perfume row: %w", err)
+		}
+
+		if yearDiscontinued.Valid {
+			p.YearDiscontinued = yearDiscontinued.Time
+		}
+
+		p.House = &house
+		p.Notes = make(map[internal.NoteCategory][]*internal.Note)
+		perfumes = append(perfumes, &p)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, fmt.Errorf("error iterating perfume rows: %w", err)
+	}
+
+	return perfumes, nil
 }
 
 //func (service PerfumeService) FindBySlug(s string) (*Perfume, error)           {}

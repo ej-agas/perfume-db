@@ -3,8 +3,7 @@ package internal
 import "time"
 
 type Note struct {
-	ID          int       `json:"-"`
-	PublicId    string    `json:"id"`
+	ID          string    `json:"id"`
 	Slug        string    `json:"slug"`
 	Name        string    `json:"name"`
 	Description string    `json:"description"`
@@ -14,7 +13,7 @@ type Note struct {
 	UpdatedAt   time.Time `json:"updated_at"`
 }
 
-func (n Note) GetID() int {
+func (n Note) GetID() string {
 	return n.ID
 }
 

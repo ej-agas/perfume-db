@@ -40,7 +40,6 @@ func (service NoteService) List(cursor, perPage int) ([]internal.Note, error) {
 		var note internal.Note
 		if err := rows.Scan(
 			&note.ID,
-			&note.PublicId,
 			&note.Slug,
 			&note.Name,
 			&note.Description,
@@ -63,7 +62,7 @@ func (service NoteService) List(cursor, perPage int) ([]internal.Note, error) {
 }
 
 func (service NoteService) Save(note *internal.Note) error {
-	if note.ID == 0 {
+	if note.ID == "" {
 		return service.saveNewNote(note)
 	}
 
@@ -72,13 +71,12 @@ func (service NoteService) Save(note *internal.Note) error {
 
 func (service NoteService) saveNewNote(note *internal.Note) error {
 	q := `
-		INSERT INTO notes (public_id, slug, name, description, image_url, note_group_id, created_at, updated_at)
+		INSERT INTO notes (slug, name, description, image_url, note_group_id, created_at, updated_at)
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
 	`
 	_, err := service.db.Exec(
 		context.Background(),
 		q,
-		note.PublicId,
 		note.Slug,
 		note.Name,
 		note.Description,
@@ -140,12 +138,11 @@ func (service NoteService) updateNote(note *internal.Note) error {
 func (service NoteService) Find(publicId string) (*internal.Note, error) {
 	var note internal.Note
 
-	q := `SELECT * FROM notes WHERE public_id = $1`
+	q := `SELECT * FROM notes WHERE id = $1`
 
 	if err := service.db.QueryRow(context.Background(), q, publicId).
 		Scan(
 			&note.ID,
-			&note.PublicId,
 			&note.Slug,
 			&note.Name,
 			&note.Description,
@@ -168,7 +165,6 @@ func (service NoteService) FindBySlug(s string) (*internal.Note, error) {
 	if err := service.db.QueryRow(context.Background(), q, s).
 		Scan(
 			&note.ID,
-			&note.PublicId,
 			&note.Slug,
 			&note.Name,
 			&note.Description,
@@ -196,7 +192,7 @@ func (service NoteService) FindMany(publicIds []string) ([]*internal.Note, error
 		placeholders[i] = fmt.Sprintf("$%d", i+1)
 		args[i] = id
 	}
-	q := fmt.Sprintf("SELECT * FROM notes WHERE public_id IN (%s)", strings.Join(placeholders, ", "))
+	q := fmt.Sprintf("SELECT * FROM notes WHERE id IN (%s)", strings.Join(placeholders, ", "))
 
 	rows, err := service.db.Query(context.Background(), q, args...)
 	if err != nil {
@@ -213,7 +209,6 @@ func (service NoteService) FindMany(publicIds []string) ([]*internal.Note, error
 		var note internal.Note
 		if err := rows.Scan(
 			&note.ID,
-			&note.PublicId,
 			&note.Slug,
 			&note.Name,
 			&note.Description,
@@ -225,7 +220,7 @@ func (service NoteService) FindMany(publicIds []string) ([]*internal.Note, error
 			return nil, err
 		}
 
-		found[note.PublicId] = true
+		found[note.ID] = true
 		notes = append(notes, &note)
 	}
 	if err := rows.Err(); err != nil {

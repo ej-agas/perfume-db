@@ -6,8 +6,7 @@ import (
 )
 
 type Perfume struct {
-	ID               int                      `json:"-"`
-	PublicId         string                   `json:"id"`
+	ID               string                   `json:"id"`
 	Slug             string                   `json:"slug"`
 	Name             string                   `json:"name"`
 	Description      string                   `json:"description"`
@@ -16,7 +15,7 @@ type Perfume struct {
 	House            *House                   `json:"house"`
 	Perfumers        []*Perfumer              `json:"perfumers"`
 	Notes            map[NoteCategory][]*Note `json:"notes"`
-	YearReleased     time.Time                `json:"year_released"`
+	ReleasedAt       time.Time                `json:"released_at"`
 	YearDiscontinued time.Time                `json:"year_discontinued"`
 	CreatedAt        time.Time                `json:"created_at"`
 	UpdatedAt        time.Time                `json:"updated_at"`
@@ -38,7 +37,7 @@ func (p Perfume) MarshalJSON() ([]byte, error) {
 		YearDiscontinued string `json:"year_discontinued"`
 	}{
 		Alias:            (*Alias)(&p),
-		YearReleased:     p.YearReleased.Format("2006"),
+		YearReleased:     p.ReleasedAt.Format("2006"),
 		YearDiscontinued: yearDiscontinued,
 	})
 }
@@ -89,7 +88,7 @@ func WithNotes(notes map[NoteCategory][]*Note) PerfumeOption {
 
 func WithYearReleased(yearReleased time.Time) PerfumeOption {
 	return func(p *Perfume) {
-		p.YearReleased = yearReleased
+		p.ReleasedAt = yearReleased
 	}
 }
 

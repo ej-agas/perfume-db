@@ -6,8 +6,7 @@ import (
 )
 
 type Perfumer struct {
-	ID          int       `json:"-"`
-	PublicId    string    `json:"id"`
+	ID          string    `json:"id"`
 	Slug        string    `json:"slug"`
 	Name        string    `json:"name"`
 	Nationality string    `json:"nationality"`
@@ -17,7 +16,7 @@ type Perfumer struct {
 	UpdatedAt   time.Time `json:"updated_at"`
 }
 
-func (p Perfumer) GetID() int {
+func (p Perfumer) GetID() string {
 	return p.ID
 }
 

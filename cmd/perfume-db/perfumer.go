@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"errors"
+	"github.com/ej-agas/perfume-db/templates"
 	"net/http"
 	"strconv"
 	"time"
@@ -155,7 +156,7 @@ func (app *application) listPerfumersHandler(w http.ResponseWriter, r *http.Requ
 	var newCursor string
 	if len(perfumers) == perPage {
 		lastHouse := perfumers[len(perfumers)-1]
-		newCursor, _ = app.Encrypt([]byte(strconv.Itoa(lastHouse.ID)))
+		newCursor, _ = app.Encrypt([]byte(lastHouse.ID))
 	}
 
 	res := Paginated[internal.Perfumer]{
@@ -181,4 +182,50 @@ func (app *application) showPerfumerBySlugHandler(w http.ResponseWriter, r *http
 	}
 
 	app.JSONResponse(w, perfumer, http.StatusOK, nil)
+}
+
+func (app *application) showPerfumerUI(w http.ResponseWriter, r *http.Request) {
+	slug := r.PathValue("slug")
+
+	// Find the perfume by slug
+	perfumer, err := app.services.Perfumer.FindBySlug(slug)
+	if err != nil {
+		app.logger.Error("failed to find perfumer", "error", err, "slug", slug)
+		app.renderErrorTemplate(w, "404", http.StatusNotFound)
+		return
+	}
+
+	perfumes, err := app.services.Perfume.FindByPerfumer(perfumer.ID)
+	if err != nil {
+		app.logger.Error("failed to find perfumers", "error", err, "slug", slug)
+		app.renderErrorTemplate(w, "404", http.StatusNotFound)
+		return
+	}
+
+	data := struct {
+		Perfumer *internal.Perfumer
+		Perfumes []*internal.Perfume
+	}{
+		Perfumer: perfumer,
+		Perfumes: perfumes,
+	}
+
+	// Check if this is an HTMX request
+	if r.Header.Get("HX-Request") == "true" {
+		tmpl := templates.Pefumer()
+		if tmpl == nil {
+			app.logger.Error("perfumer template is nil")
+			http.Error(w, "Internal server error", http.StatusInternalServerError)
+			return
+		}
+
+		if err := tmpl.Execute(w, data); err != nil {
+			app.logger.Error("error executing perfumer template", "error", err)
+			http.Error(w, "Internal server error", http.StatusInternalServerError)
+		}
+		return
+	}
+
+	// Full page load
+	app.renderTemplate(w, r, "perfumer", data)
 }

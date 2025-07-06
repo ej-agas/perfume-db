@@ -38,7 +38,6 @@ func (service PerfumerService) List(cursor, perPage int) ([]internal.Perfumer, e
 		var perfumer internal.Perfumer
 		if err := rows.Scan(
 			&perfumer.ID,
-			&perfumer.PublicId,
 			&perfumer.Slug,
 			&perfumer.Name,
 			&perfumer.Nationality,
@@ -61,7 +60,7 @@ func (service PerfumerService) List(cursor, perPage int) ([]internal.Perfumer, e
 }
 
 func (service PerfumerService) Save(perfumer *internal.Perfumer) error {
-	if perfumer.ID == 0 {
+	if perfumer.ID == "" {
 		return service.saveNewPerfumer(perfumer)
 	}
 
@@ -70,13 +69,12 @@ func (service PerfumerService) Save(perfumer *internal.Perfumer) error {
 
 func (service PerfumerService) saveNewPerfumer(perfumer *internal.Perfumer) error {
 	q := `
-		INSERT INTO perfumers (public_id, slug, name, nationality, image_url, birth_date, created_at, updated_at)
+		INSERT INTO perfumers (slug, name, nationality, image_url, birth_date, created_at, updated_at)
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
 	`
 	_, err := service.db.Exec(
 		context.Background(),
 		q,
-		perfumer.PublicId,
 		perfumer.Slug,
 		perfumer.Name,
 		perfumer.Nationality,
@@ -137,12 +135,11 @@ func (service PerfumerService) updatePerfumer(perfumer *internal.Perfumer) error
 func (service PerfumerService) Find(publicId string) (*internal.Perfumer, error) {
 	var perfumer internal.Perfumer
 
-	q := `SELECT * FROM perfumers WHERE public_id = $1`
+	q := `SELECT * FROM perfumers WHERE id = $1`
 
 	if err := service.db.QueryRow(context.Background(), q, publicId).
 		Scan(
 			&perfumer.ID,
-			&perfumer.PublicId,
 			&perfumer.Slug,
 			&perfumer.Name,
 			&perfumer.Nationality,
@@ -160,12 +157,20 @@ func (service PerfumerService) Find(publicId string) (*internal.Perfumer, error)
 func (service PerfumerService) FindBySlug(s string) (*internal.Perfumer, error) {
 	var perfumer internal.Perfumer
 
-	q := `SELECT * FROM perfumers WHERE slug = $1`
+	q := `SELECT 
+    	p.id,
+    	p.slug,
+    	p.name,
+    	p.nationality,
+    	COALESCE(p.image_url, '') as image_url,
+    	p.birth_date,
+		p.created_at,
+		p.updated_at
+	FROM perfumers p WHERE slug = $1`
 
 	if err := service.db.QueryRow(context.Background(), q, s).
 		Scan(
 			&perfumer.ID,
-			&perfumer.PublicId,
 			&perfumer.Slug,
 			&perfumer.Name,
 			&perfumer.Nationality,
@@ -189,7 +194,7 @@ func (service PerfumerService) FindMany(publicIds ...string) ([]*internal.Perfum
 		placeholders[i] = fmt.Sprintf("$%d", i+1)
 		args[i] = id
 	}
-	q := fmt.Sprintf("SELECT * FROM perfumers WHERE public_id IN (%s)", strings.Join(placeholders, ", "))
+	q := fmt.Sprintf("SELECT * FROM perfumers WHERE id IN (%s)", strings.Join(placeholders, ", "))
 
 	rows, err := service.db.Query(context.Background(), q, args...)
 	if err != nil {
@@ -206,7 +211,6 @@ func (service PerfumerService) FindMany(publicIds ...string) ([]*internal.Perfum
 		var perfumer internal.Perfumer
 		if err := rows.Scan(
 			&perfumer.ID,
-			&perfumer.PublicId,
 			&perfumer.Slug,
 			&perfumer.Name,
 			&perfumer.Nationality,
@@ -218,7 +222,7 @@ func (service PerfumerService) FindMany(publicIds ...string) ([]*internal.Perfum
 			return nil, err
 		}
 
-		found[perfumer.PublicId] = true
+		found[perfumer.ID] = true
 		perfumers = append(perfumers, &perfumer)
 	}
 	if err := rows.Err(); err != nil {

@@ -1,0 +1,56 @@
+{{define "house"}}
+<div class="max-w-4xl mx-auto p-6">
+    {{- if .ImageURL -}}
+    <div class="mb-6">
+        <img src="{{.ImageURL}}" alt="{{.Name}}" class="w-full h-64 object-cover rounded-lg">
+    </div>
+    {{- end -}}
+    <div class="bg-white p-8 rounded-lg shadow-md">
+        <h1 class="text-3xl font-bold text-gray-800 mb-2">{{.Name}}</h1>
+        <div class="flex items-center text-gray-600 mb-6">
+            <span class="mr-4">{{.Country}}</span>
+            {{- if .FoundedAt -}}
+            <span>Founded in {{.FoundedAt.Year}}</span>
+            {{- end -}}
+        </div>
+        {{- if .Description -}}
+        <div class="prose max-w-none">
+            {{.Description | safeHTML}}
+        </div>
+        {{- end -}}
+        <div class="mt-12">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6">Featured Perfumes</h2>
+            {{- if eq (len .Perfumes) 0 -}}
+            <p class="text-gray-500 italic">No featured perfumes available for this house.</p>
+            {{- else -}}
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {{- range .Perfumes -}}
+                <div class="border rounded-lg p-4 hover:shadow-md transition-shadow duration-200 hover:border-blue-300 cursor-pointer"
+                   hx-get="/perfumes/{{.Slug}}"
+                   hx-target="main"
+                   hx-push-url="true"
+                   hx-swap="innerHTML">
+                    <h3 class="text-lg font-semibold text-gray-800">{{.Name}}</h3>
+                    {{- if .Description -}}
+                    <p class="text-gray-600 mt-2 text-sm line-clamp-3">{{.Description}}</p>
+                    {{- end -}}
+                </div>
+                {{- end -}}
+            </div>
+            {{- end -}}
+        </div>
+    </div>
+    <div class="mt-8">
+        <a href="/"
+           hx-get="/"
+           hx-target="main"
+           hx-push-url="true"
+           hx-swap="innerHTML"
+           hx-select="main"
+           hx-select-oob="true"
+           class="text-blue-600 hover:text-blue-800 cursor-pointer">
+            &larr; Back to all houses
+        </a>
+    </div>
+</div>
+{{end}}

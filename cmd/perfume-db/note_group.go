@@ -48,7 +48,7 @@ func (app *application) listNoteGroups(w http.ResponseWriter, r *http.Request) {
 	var newCursor string
 	if len(noteGroups) == perPage {
 		lastNoteGroup := noteGroups[len(noteGroups)-1]
-		newCursor, _ = app.Encrypt([]byte(strconv.Itoa(lastNoteGroup.ID)))
+		newCursor, _ = app.Encrypt([]byte(lastNoteGroup.ID))
 	}
 
 	res := Paginated[internal.NoteGroup]{

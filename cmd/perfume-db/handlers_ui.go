@@ -1,8 +1,12 @@
 package main
 
 import (
+	"fmt"
+	"github.com/ej-agas/perfume-db/internal"
 	"github.com/ej-agas/perfume-db/templates"
+	"html/template"
 	"net/http"
+	"time"
 )
 
 func (app *application) render(w http.ResponseWriter, r *http.Request, name string, data interface{}) {
@@ -29,17 +33,93 @@ func (app *application) homeUI(w http.ResponseWriter, r *http.Request) {
 
 func (app *application) listHousesUI(w http.ResponseWriter, r *http.Request) {
 	houses, err := app.services.House.List(0, 10)
+	time.Sleep(250 * time.Millisecond)
 	if err != nil {
 		app.logger.Error("failed to list houses", "error", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
 
-	// For now, just return a simple list - we'll enhance this later
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	for _, house := range houses {
-		_, _ = w.Write([]byte(`<div class="mb-2">` + house.Name + `</div>`))
+		tmpl := templates.HouseCard()
+		if err := tmpl.Execute(w, house); err != nil {
+			app.logger.Error("error executing house card template", "error", err)
+		}
 	}
+}
+
+// HouseWithPerfumes represents the data needed for the house detail page
+type HouseWithPerfumes struct {
+	*internal.House
+	Perfumes *[]*internal.Perfume
+}
+
+func (app *application) showHouseUI(w http.ResponseWriter, r *http.Request) {
+	slug := r.PathValue("slug")
+
+	house, err := app.services.House.FindBySlug(slug)
+	if err != nil {
+		app.logger.Error("failed to find house", "error", err, "slug", slug)
+		app.renderErrorTemplate(w, "404", http.StatusNotFound)
+		return
+	}
+
+	// Fetch perfumes for the house
+	perfumes, err := app.services.House.FindPerfumesByHouse(*house)
+	if err != nil {
+		app.logger.Error("failed to fetch perfumes", "error", err, "house_id", house.ID)
+		// Continue with empty perfumes slice on error
+		emptyPerfumes := make([]*internal.Perfume, 0)
+		perfumes = &emptyPerfumes
+	}
+
+	data := HouseWithPerfumes{
+		House:    house,
+		Perfumes: perfumes,
+	}
+
+	// Check if this is an HTMX request
+	if r.Header.Get("HX-Request") == "true" {
+		tmpl := templates.House()
+		if tmpl == nil {
+			app.logger.Error("house template is nil")
+			http.Error(w, "Internal server error", http.StatusInternalServerError)
+			return
+		}
+
+		if err := tmpl.Execute(w, data); err != nil {
+			app.logger.Error("error executing house template", "error", err)
+			http.Error(w, "Internal server error", http.StatusInternalServerError)
+		}
+		return
+	}
+
+	// Full page load
+	app.renderTemplate(w, r, "house", data)
+}
+
+// renderTemplate is a helper to render templates with the base layout
+func (app *application) renderTemplate(w http.ResponseWriter, r *http.Request, templateName string, data interface{}) {
+	tmpl, err := templates.NewTemplates()
+	if err != nil {
+		app.logger.Error("error creating templates", "error", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	// Create a temporary template that defines "content" as our template
+	tmpl = template.Must(tmpl.Parse(fmt.Sprintf(`{{define "content"}}{{template "%s" .}}{{end}}`, templateName)))
+	if err := tmpl.ExecuteTemplate(w, "base", data); err != nil {
+		app.logger.Error("error executing base template", "error", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+	}
+}
+
+// renderErrorTemplate is a helper to render error templates
+func (app *application) renderErrorTemplate(w http.ResponseWriter, templateName string, statusCode int) {
+	w.WriteHeader(statusCode)
+	app.renderTemplate(w, nil, templateName, nil)
 }
 
 func (app *application) newHouseFormUI(w http.ResponseWriter, r *http.Request) {

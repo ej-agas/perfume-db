@@ -5,16 +5,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Perfume DB</title>
-    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <script src="https://cdn.jsdelivr.net/npm/htmx.org@2.0.5/dist/htmx.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.0/dist/cdn.min.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
     <link rel="stylesheet" href="/static/css/styles.css">
-    <script>
-        // Enable HTMX debugging in development
-        document.addEventListener('DOMContentLoaded', function() {
-            htmx.logAll();
-        });
-    </script>
+    <script src="/static/js/script.js"></script>
 </head>
 <body class="bg-gray-50">
     <div class="container mx-auto px-4 py-8">
@@ -22,11 +17,9 @@
             <h1 class="text-3xl font-bold text-gray-800">Perfume Database</h1>
             <p class="text-gray-600">Explore and manage your perfume collection</p>
         </header>
-        
         <main>
             {{template "content" .}}
         </main>
-        
         <footer class="mt-12 text-center text-gray-500 text-sm">
             <p>© 2025 Perfume DB. All rights reserved.</p>
         </footer>

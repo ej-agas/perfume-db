@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/ej-agas/perfume-db/templates"
 	"net/http"
 	"time"
 
@@ -190,7 +191,7 @@ func (app *application) updatePerfumeHandler(w http.ResponseWriter, r *http.Requ
 	}
 
 	if req.YearReleased != 0 {
-		perfume.YearReleased = time.Date(req.YearReleased, time.January, 1, 0, 0, 0, 0, time.UTC)
+		perfume.ReleasedAt = time.Date(req.YearReleased, time.January, 1, 0, 0, 0, 0, time.UTC)
 	}
 
 	if req.YearDiscontinued != 0 {
@@ -259,4 +260,44 @@ func (app *application) updatePerfumeHandler(w http.ResponseWriter, r *http.Requ
 	}
 
 	app.JSONResponse(w, perfume, 200, nil)
+}
+
+func (app *application) showPerfumeUI(w http.ResponseWriter, r *http.Request) {
+	slug := r.PathValue("slug")
+
+	// Find the perfume by slug
+	perfume, err := app.services.Perfume.FindBySlug(slug)
+	if err != nil {
+		app.logger.Error("failed to find perfume", "error", err, "slug", slug)
+		app.renderErrorTemplate(w, "404", http.StatusNotFound)
+		return
+	}
+
+	data := struct {
+		Perfume   *internal.Perfume
+		House     *internal.House
+		Perfumers []*internal.Perfumer
+	}{
+		Perfume:   perfume,
+		House:     perfume.House,
+		Perfumers: perfume.Perfumers,
+	}
+
+	if r.Header.Get("HX-Request") == "true" {
+		tmpl := templates.Perfume() // Make sure you have this template defined
+		if tmpl == nil {
+			app.logger.Error("perfume template is nil")
+			http.Error(w, "Internal server error", http.StatusInternalServerError)
+			return
+		}
+
+		if err := tmpl.Execute(w, data); err != nil {
+			app.logger.Error("error executing perfume template", "error", err)
+			http.Error(w, "Internal server error", http.StatusInternalServerError)
+		}
+		return
+	}
+
+	// Full page load
+	app.renderTemplate(w, r, "perfume", data)
 }

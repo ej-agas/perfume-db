@@ -1,5 +1,5 @@
 package internal
 
 type Model interface {
-	GetID() int
+	GetID() string
 }
